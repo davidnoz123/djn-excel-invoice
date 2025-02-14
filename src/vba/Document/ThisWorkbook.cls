@@ -14,23 +14,28 @@ Call AutoBackup.Terminate("BeforeClose")
 End Sub
 
 Private Sub Workbook_Open()
-If ThisWorkbook.name = "avenrose_florist.xlsm" Then
-  Call RefreshFromOneDrive
-  Call AutoBackup.xRunAutoBackup
-ElseIf InStr(ThisWorkbook.name, "update.") = 1 Then
-  On Error GoTo exit_with_error
-  Dim Application_ScreenUpdating: Application_ScreenUpdating = Application.ScreenUpdating
-  Application.ScreenUpdating = False
-  Call UpdateFromThisWorkbook(0)
-exit_with_error:
-  Application.ScreenUpdating = Application_ScreenUpdating
-  ThisWorkbook.Close
-End If
+On Error Resume Next
+Call AutoBackup.xRunAutoBackup
+'If ThisWorkbook.name = "avenrose_florist.xlsm" Then
+'  Call RefreshFromOneDrive
+'  Call AutoBackup.xRunAutoBackup
+'ElseIf InStr(ThisWorkbook.name, "update.") = 1 Then
+'  On Error GoTo exit_with_error
+'  Dim Application_ScreenUpdating: Application_ScreenUpdating = Application.ScreenUpdating
+'  Application.ScreenUpdating = False
+'  Call UpdateFromThisWorkbook(0)
+'exit_with_error:
+'  Application.ScreenUpdating = Application_ScreenUpdating
+'  ThisWorkbook.Close
+'End If
 End Sub
 
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal target As Range)
 Call AutoBackup.SignalChange(0)
 End Sub
+
+
+
 
 
 
