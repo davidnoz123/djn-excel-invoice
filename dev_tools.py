@@ -53,6 +53,9 @@ class ExcelVBA:
     vbext_ct_StdModule, vbext_ct_ClassModule, vbext_ct_MSForm, vbext_ct_Document = 1, 2, 3, 100
     
     vbext_ct_ComponentTypes = {vbext_ct_StdModule, vbext_ct_ClassModule, vbext_ct_MSForm, vbext_ct_Document}
+    
+    # https://learn.microsoft.com/en-us/office/vba/language/reference/visual-basic-add-in-model/properties-visual-basic-add-in-model#type
+    vbext_ct_ComponentTypesx = {vbext_ct_StdModule : ("StdModule", "bas"), vbext_ct_ClassModule : ("ClassModule", "cls"), vbext_ct_MSForm : ("MSForm", "frm"), vbext_ct_Document : ("Document", "cls")}    
 
     @classmethod
     def validate_tlx_base(cls, tlx):        
@@ -602,13 +605,61 @@ End Function
             vld.ShowError = True
         finally:
             excel.ScreenUpdating = ScreenUpdating
+            
+            
+    class WorkbookOpenWithDisabledMacros:
+
+        msoAutomationSecurityLow = 1 #(Enables all macros—not recommended for security reasons.)        
+        msoAutomationSecurityByUI = 2 #(Uses the security setting chosen in the UI.)        
+        msoAutomationSecurityForceDisable = 3 #(Disables all macros when opening a file via automation.)
+        
+        def __init__(self, wb):
+            self.wb, self.full_path, self.xl, self.AutomationSecurity = wb, os.path.join(wb.Path, wb.Name), wb.Parent, None
+        
+        def __enter__(self):
+            print(f"WorkbookOpenWithDisabledMacros:Closing and saving:{self.full_path} ...")
+            self.wb.Close(SaveChanges:=True)
+            self.wb = None
+            self.AutomationSecurity_bak = self.xl.AutomationSecurity
+            try:
+                print(f"WorkbookOpenWithDisabledMacros:Disable VBA & Open:{self.full_path} ...")
+                self.xl.AutomationSecurity = self.msoAutomationSecurityForceDisable
+                self.wb = self.xl.Workbooks.Open(self.full_path)            
+            except BaseException as e:
+                print(f"ERROR:WorkbookOpenWithDisabledMacros:Failure reopening Workbook:{e.__class__}:{e}:{self.full_path}")
+                self.wb = None
+                try:
+                    self.xl.AutomationSecurity = self.AutomationSecurity_bak
+                except BaseException as ee:
+                    print(f"WARNING:WorkbookOpenWithDisabledMacros:Failed to restore Excel.AutomationSecurity:{ee.__class__}:{ee}")
+                    self.AutomationSecurity_bak = None
+                raise e
+            return self 
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            if self.AutomationSecurity_bak is not None:
+                try:
+                    self.xl.AutomationSecurity = self.AutomationSecurity_bak
+                except BaseException as ee:
+                    print(f"WARNING:WorkbookOpenWithDisabledMacros:Failed to restore Excel.AutomationSecurity:{ee.__class__}:{ee}")
+            if self.wb is not None:
+                print(f"WorkbookOpenWithDisabledMacros:Closing and saving:{self.full_path} ...")
+                self.wb.Close(SaveChanges:=True)
+                self.wb = None
+            try:
+                print(f"WorkbookOpenWithDisabledMacros:Reloading Workbook:{self.full_path} ...")
+                self.wb = self.xl.Workbooks.Open(self.full_path)
+                print(f"WorkbookOpenWithDisabledMacros:Workbook reload OK:{self.full_path} Complete")
+            except BaseException as ee:
+                print(f"WARNING:WorkbookOpenWithDisabledMacros:Failure reloading Workbook:{ee.__class__}:{ee}:{self.full_path}")
+            
+            return False  
+
+            
                 
 class VBAIO:            
+   
     
-    vbext_ct_StdModule, vbext_ct_ClassModule, vbext_ct_MSForm, vbext_ct_Document = 1, 2, 3, 100
-    
-    # https://learn.microsoft.com/en-us/office/vba/language/reference/visual-basic-add-in-model/properties-visual-basic-add-in-model#type
-    vbext_ct_ComponentTypesx = {vbext_ct_StdModule : ("StdModule", "bas"), vbext_ct_ClassModule : ("ClassModule", "cls"), vbext_ct_MSForm : ("MSForm", "frm"), vbext_ct_Document : ("Document", "cls")}
     _vbaio_lck = threading.Lock()
     _folder_base_name_2_vbext_ct_ComponentTypesx = None
     
@@ -617,7 +668,7 @@ class VBAIO:
         if cls._folder_base_name_2_vbext_ct_ComponentTypesx is None:
             with cls._vbaio_lck:
                 if cls._folder_base_name_2_vbext_ct_ComponentTypesx is None:
-                    cls._folder_base_name_2_vbext_ct_ComponentTypesx = {v[0] : k for k, v in cls.vbext_ct_ComponentTypesx.items()}
+                    cls._folder_base_name_2_vbext_ct_ComponentTypesx = {v[0] : k for k, v in ExcelVBA.vbext_ct_ComponentTypesx.items()}
         return cls._folder_base_name_2_vbext_ct_ComponentTypesx
         
     @classproperty
@@ -629,31 +680,61 @@ class VBAIO:
         for r, d, f in os.walk(cls.vba_root):
             bn = os.path.basename(r) 
             if bn in cls.folder_base_name_2_vbext_ct_ComponentTypesx:
-                ext = cls.vbext_ct_ComponentTypesx[cls.folder_base_name_2_vbext_ct_ComponentTypesx[bn]][1]
+                Type = cls.folder_base_name_2_vbext_ct_ComponentTypesx[bn]
+                extn = f".{ExcelVBA.vbext_ct_ComponentTypesx[Type][1]}"
                 for p in f:
-                    if p.endswith(f".{ext}"):
-                        yield os.path.join(r, p)
+                    if p.endswith(extn):
+                        Name = p[:-len(extn)]
+                        yield Type, Name, os.path.join(r, p)
+                        
+    @classmethod    
+    def VBAIterateComps(cls, wb):                        
+        VBComps = wb.VBProject.VBComponents
+        for VBComp in VBComps:
+            if VBComp.Type not in ExcelVBA.vbext_ct_ComponentTypesx:
+                raise Exception("VBComp.Type not in ExcelVBA.vbext_ct_ComponentTypesx")
+            yield VBComp
             
     @classmethod
     def VBAExport(cls, wb):
-        VBComps = wb.VBProject.VBComponents
-        for VBComp in VBComps:
-            if VBComp.Type not in VBAIO.vbext_ct_ComponentTypesx:
-                raise Exception("")
-            file_path = os.path.join(cls.vba_root, VBAIO.vbext_ct_ComponentTypesx[VBComp.Type][0], f"{VBComp.Name}.{VBAIO.vbext_ct_ComponentTypesx[VBComp.Type][1]}")
+        code_name_2_comp_name = {ws.CodeName: ws.Name for ws in wb.Sheets}
+        code_name_2_comp_name["ThisWorkbook"] = "ThisWorkbook"
+        for VBComp in cls.VBAIterateComps(wb):
+            base_name = VBComp.Name if VBComp.Type != ExcelVBA.vbext_ct_Document else code_name_2_comp_name[VBComp.Name]
+            file_path = os.path.join(cls.vba_root, ExcelVBA.vbext_ct_ComponentTypesx[VBComp.Type][0], f"{base_name}.{ExcelVBA.vbext_ct_ComponentTypesx[VBComp.Type][1]}")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             print(f"VBAExport:{file_path}")
             VBComp.Export(file_path)    
-        
+            
     @classmethod
     def VBAImport(cls, wb):
-        for ff in cls.VBAIterateFiles():
-            print(ff)
+        wowdm = ExcelVBA.WorkbookOpenWithDisabledMacros(wb)
+        with wowdm:
+            wb = wowdm.wb
+            for Type, Name, fp in cls.VBAIterateFiles():
+                VBComp = ExcelVBA.ExistingVBComponent(wb, Name)                
+                print(Type, Name, fp, VBComp)                       
+                if Type != ExcelVBA.vbext_ct_Document:
+                    # The most general way to do this is to delete the component and reload it
+                    if VBComp is not None:
+                        wb.VBProject.VBComponents.Remove(VBComp)
+                    wb.VBProject.VBComponents.Import(fp)
+                else:
+                    # This code is associated with a sheet ... we can't use VBComponents.Import
+                    ws_exists = ExcelVBA.WsExists(Name)
+                    if (VBComp is not None) != ws_exists:
+                        raise Exception("(VBComp is not None) != ws_exists")            
+                    if not ws_exists:
+                        pass
+        return wowdm.wb
    
    
 if True and __name__ == "__main__":
     
     xl = ExcelVBA.get_excel_x()
-    wb = xl.Workbooks("rosehaven_florist.xlsm")
+    wb = xl.Workbooks("rosehaven_florist_junk.xlsm")
+    #wb = xl.Workbooks("Journal.xlsm")
     #VBAExport(wb)
-    VBAIO.VBAImport(wb)
+    #VBAIO.VBAImport(wb)
+    VBAIO.VBAExport(wb)
+    
