@@ -11,9 +11,10 @@ import runpy ; temp = runpy._run_module_as_main("dev_tools")
 import sys
 import os
 import threading
+import re
 # import time
 # import json
-# import re
+# 
 # 
 # import importlib
 # import collections
@@ -654,6 +655,14 @@ End Function
                 print(f"WARNING:WorkbookOpenWithDisabledMacros:Failure reloading Workbook:{ee.__class__}:{ee}:{self.full_path}")
             
             return False  
+            
+    vba_header_end_pattern = re.compile(r"^(Attribute\s+VB_[^\n]+\n)+(?!Attribute)", re.MULTILINE)            
+            
+    @classmethod
+    def remove_vba_header(cls, vba_text):
+        match = cls.vba_header_end_pattern.search(vba_text)
+        return vba_text[match.end():].lstrip() if match else vba_text
+            
 
             
                 
@@ -700,7 +709,12 @@ class VBAIO:
         code_name_2_comp_name = {ws.CodeName: ws.Name for ws in wb.Sheets}
         code_name_2_comp_name["ThisWorkbook"] = "ThisWorkbook"
         for VBComp in cls.VBAIterateComps(wb):
-            base_name = VBComp.Name if VBComp.Type != ExcelVBA.vbext_ct_Document else code_name_2_comp_name[VBComp.Name]
+            if VBComp.Type != ExcelVBA.vbext_ct_Document:
+                base_name = VBComp.Name
+            else:
+                if VBComp.CodeModule.CountOfLines == 0:
+                    continue
+                base_name = code_name_2_comp_name[VBComp.Name]
             file_path = os.path.join(cls.vba_root, ExcelVBA.vbext_ct_ComponentTypesx[VBComp.Type][0], f"{base_name}.{ExcelVBA.vbext_ct_ComponentTypesx[VBComp.Type][1]}")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             print(f"VBAExport:{file_path}")
@@ -711,21 +725,27 @@ class VBAIO:
         wowdm = ExcelVBA.WorkbookOpenWithDisabledMacros(wb)
         with wowdm:
             wb = wowdm.wb
-            for Type, Name, fp in cls.VBAIterateFiles():
-                VBComp = ExcelVBA.ExistingVBComponent(wb, Name)                
-                print(Type, Name, fp, VBComp)                       
+            for Type, Name, fp in cls.VBAIterateFiles():          
+                print(f"VBAImport:%3d %-30s %s" % (Type, Name, fp))                       
                 if Type != ExcelVBA.vbext_ct_Document:
                     # The most general way to do this is to delete the component and reload it
+                    VBComp = ExcelVBA.ExistingVBComponent(wb, Name)                          
                     if VBComp is not None:
                         wb.VBProject.VBComponents.Remove(VBComp)
                     wb.VBProject.VBComponents.Import(fp)
                 else:
                     # This code is associated with a sheet ... we can't use VBComponents.Import
-                    ws_exists = ExcelVBA.WsExists(Name)
-                    if (VBComp is not None) != ws_exists:
-                        raise Exception("(VBComp is not None) != ws_exists")            
-                    if not ws_exists:
-                        pass
+                    if Name == "ThisWorkbook":
+                        VBComp = ExcelVBA.ExistingVBComponent(wb, "ThisWorkbook")
+                    else:
+                        ws = ExcelVBA.SafeGetWorksheet(wb, Name)
+                        VBComp = ExcelVBA.ExistingVBComponent(wb, ws.CodeName)
+                        
+                    if VBComp.CodeModule.CountOfLines > 0 :
+                        VBComp.CodeModule.DeleteLines(1, VBComp.CodeModule.CountOfLines)
+                    with open(fp, "r") as ff:
+                        code = ExcelVBA.remove_vba_header(ff.read())
+                    VBComp.CodeModule.AddFromString(code)
         return wowdm.wb
    
    
@@ -735,6 +755,9 @@ if True and __name__ == "__main__":
     wb = xl.Workbooks("rosehaven_florist_junk.xlsm")
     #wb = xl.Workbooks("Journal.xlsm")
     #VBAExport(wb)
-    #VBAIO.VBAImport(wb)
+    wb = VBAIO.VBAImport(wb)
     VBAIO.VBAExport(wb)
+    
+
+
     
