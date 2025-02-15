@@ -225,7 +225,6 @@ End Function
 
 Private Sub ReplaceTokens(doc As Word.Document, master_record As cMainRecord, invoice_number As Long, date_ As Date)
 ' Substitute the variable strings in the document
-Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(master_record.SubCustomerCommission)
 Dim search_and_replace As New Scripting.Dictionary
 search_and_replace.CompareMode = TextCompare
 search_and_replace.Add "{INVOICE NUMBER}", format(invoice_number, "0000000")
@@ -237,7 +236,6 @@ search_and_replace.Add "{Invoiced Town, City Post Code}", StringifyInvoiceContac
 search_and_replace.Add "{Invoiced Country}", StringifyInvoiceContactDetail(master_record.Country)
 search_and_replace.Add "{Invoiced Phone}", StringifyInvoiceContactDetail(master_record.Phone, "Phone: ")
 search_and_replace.Add "{Invoiced Email}", StringifyInvoiceContactDetail(master_record.EmailAddressx, "Email: ")
-search_and_replace.Add "{SubCustomerCommission Notification}", IIf(bHasSubCustomerCommission, "Discount:" + FormatPercent(master_record.SubCustomerCommission, 2, vbTrue) + vbLf, "")
 
 Call SearchAndReplace(doc, search_and_replace)
 End Sub
@@ -321,96 +319,12 @@ t.Rows(row_TOTAL_DUE).Cells(t.Rows(row_TOTAL_DUE).Cells.count).Range = FormatCur
 
 End Sub
 
-Private Sub Table_SubCusts(doc As Word.Document, transColl As Collection)
-'
-
-Dim master_record As cMainRecord: Set master_record = transColl(1).MainRecord
-
-' Get the items table in the document
-Dim a:  a = Array( _
-"NAME", _
-"SUPPLIED", _
-"DATE", _
-"PRICE", _
-"GST", _
-"TOT. DUE", _
-"DISC.", _
-"CUST. CHG." _
-)
-Dim m_n As Scripting.Dictionary
-Call AddItemsTable("SubCusts", doc, table_index, m_n, a)
-Dim t As Word.Table: Set t = doc.Tables(table_index)
-Dim col_NAME As Long: col_NAME = m_n("NAME")
-Dim col_SUPPLIED As Long: col_SUPPLIED = m_n("SUPPLIED")
-Dim col_DATE As Long: col_DATE = m_n("DATE")
-Dim col_PRICE As Long: col_PRICE = m_n("PRICE")
-Dim col_GST As Long: col_GST = m_n("GST")
-Dim col_TOTAL_DUE As Long: col_TOTAL_DUE = m_n("TOT. DUE")
-Dim col_DISCOUNT As Long: col_DISCOUNT = m_n("DISC.")
-Dim col_CUST_CHARGE As Long: col_CUST_CHARGE = m_n("CUST. CHG.")
-
-
-' Populate the items table
-Dim tr As cTransactionRecord
-Dim i As Long: i = 1
-Dim bef_gst_sum As Double: bef_gst_sum = 0#
-Dim aft_gst_sum As Double: aft_gst_sum = 0#
-Dim gst_sum As Double: gst_sum = 0#
-For Each tr In transColl
-  If Not master_record Is tr.MainRecord Then
-    Call ErrorExit("Not master_record Is tr.MainRecord")
-  End If
-  i = i + 1
-  If i >= 1 Then
-    Call t.Rows.Add(t.Rows(i))
-  End If
-  MainForm.Do_Events "ItemsTable " + CStr(tr.Description)
-  t.Rows(i).Cells(col_NAME).Range = CStr(tr.SubCustomerName)
-  t.Rows(i).Cells(col_SUPPLIED).Range = CStr(tr.Description)
-  t.Rows(i).Cells(col_DATE).Range = format(tr.DeliveryDate, "yyyy-mm-dd")
-  
-  Dim customer_charge As Double: customer_charge = tr.UnitPrice
-  Dim aft_gst As Double
-  
-  If Trim(tr.SubCustomerName) = "" Then
-    aft_gst = customer_charge
-  Else
-    aft_gst = Round(customer_charge * (1 - master_record.SubCustomerCommission), 2)
-  End If
-  
-  Dim bef_gst As Double: bef_gst = Round(aft_gst / (1# + master_record.Parent.GST_RATE), 2)
-  
-  t.Rows(i).Cells(col_PRICE).Range = FormatCurrency(bef_gst, 2)
-  t.Rows(i).Cells(col_GST).Range = FormatCurrency(aft_gst - bef_gst, 2)
-  t.Rows(i).Cells(col_TOTAL_DUE).Range = FormatCurrency(aft_gst, 2)
-  t.Rows(i).Cells(col_DISCOUNT).Range = FormatCurrency(customer_charge - aft_gst, 2)
-  t.Rows(i).Cells(col_CUST_CHARGE).Range = FormatCurrency(customer_charge, 2)
-  
-  bef_gst_sum = bef_gst_sum + bef_gst
-  aft_gst_sum = aft_gst_sum + aft_gst
-  gst_sum = gst_sum + (aft_gst - bef_gst)
-Next tr
-
-t.Rows(t.Rows.count - 1).Delete
-
-t.Rows(t.Rows.count).Cells(col_PRICE).Range = FormatCurrency(bef_gst_sum, 2)
-t.Rows(t.Rows.count).Cells(col_GST).Range = FormatCurrency(gst_sum, 2)
-t.Rows(t.Rows.count).Cells(col_TOTAL_DUE).Range = FormatCurrency(aft_gst_sum, 2)
-
-End Sub
-
-
 Function CreateInvoiceDocument(transColl As Collection, invoice_number As Long, date_ As Date) As Word.Document
 Dim doc As Word.Document
 Set doc = template.Application.Documents.Add(template.FullName)
 Dim master_record As cMainRecord: Set master_record = transColl(1).MainRecord
 Call ReplaceTokens(doc, master_record, invoice_number, date_)
-Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(master_record.SubCustomerCommission)
-If bHasSubCustomerCommission Then
-  Call Table_SubCusts(doc, transColl)
-Else
-  Call Table_Standard(doc, transColl)
-End If
+Call Table_Standard(doc, transColl)
 Set CreateInvoiceDocument = doc
 End Function
 

@@ -3,14 +3,6 @@ Option Explicit
 
 Sub ErrorExit(msg As String)
 Call Logg("Error : " + Replace(msg, vbCrLf, " "))
-Dim sHostName As String
-sHostName = Environ$("computername")
-Select Case sHostName
-Case "ANZWL00001"
-  'Debug.Assert False
-Case Else
-  
-End Select
 MsgBox msg, vbCritical, "Error"
 End
 End Sub
@@ -115,14 +107,9 @@ Function NumberOfDimensions(a) As Long
 If Not IsArray(a) Then
   NumberOfDimensions = 0
 Else
-  'Sets up the error handler.
   On Error GoTo FinalDimension
-  'Visual Basic for Applications arrays can have up to 60000
-  'dimensions; this allows for that.
   Dim ErrorCheck As Long
   For NumberOfDimensions = 1 To 60000
-     'It is necessary to do something with the LBound to force it
-     'to generate an error.
      ErrorCheck = LBound(a, NumberOfDimensions)
   Next NumberOfDimensions
 FinalDimension:
@@ -167,7 +154,6 @@ End Select
 Set PutData = r
 End Function
 
-
 Function WsExists(wb As Workbook, sName As String) As Boolean
 On Error GoTo 10
 Dim ws As Worksheet
@@ -177,7 +163,6 @@ Exit Function
 10:
 WsExists = False
 End Function
-
 
 Function SafeGetWorksheet(wb As Workbook, sWorksheetName As String, Optional ByVal bEnsureEmpty As Boolean = False) As Worksheet
 If wb Is Nothing Then
@@ -191,14 +176,9 @@ If bEnsureEmpty Then
   Call ClearAllShapes(SafeGetWorksheet)
 End If
 Exit Function
-' deletes a sheet named strSheetName in the active workbook
-'Application.DisplayAlerts = False
-'SafeGetWorksheet.Delete
-'Application.DisplayAlerts = True
 10:
 Set SafeGetWorksheet = SafeAddWorksheet(wb, sWorksheetName)
 End Function
-
 
 Function SafeAddWorksheet(wb As Workbook, sWorksheetName As String) As Worksheet
 On Error Resume Next
@@ -218,7 +198,6 @@ rSelection.Parent.Activate
 rSelection.Select
 End Function
 
-
 Sub ClearAllNames(ws As Worksheet)
 While ws.Names.count > 0
   Dim n As name
@@ -236,4 +215,17 @@ While ws.Shapes.count > 0
 Wend
 End Sub
 
-
+Function GetRangeFromString(rangeStr As String) As Range
+On Error GoTo exit_with_failure
+Dim ws As Worksheet
+Dim arr() As String
+arr = Split(rangeStr, "!")
+If UBound(arr) <> 1 Then
+    Set GetRangeFromString = Nothing
+Else
+    Set ws = ThisWorkbook.Sheets(Replace(arr(0), "'", ""))
+    Set GetRangeFromString = ws.Range(arr(1))
+End If
+Exit Function
+exit_with_failure:
+End Function

@@ -9,8 +9,6 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
-Dim TempCombo_InitialValue As Variant
-
 Private Sub Worksheet_BeforeDoubleClick(ByVal target As Range, Cancel As Boolean)
 If target.row > 1 Then
   Dim ws As Worksheet: Set ws = target.Parent
@@ -38,80 +36,9 @@ End If
 End Sub
 
 Private Sub Worksheet_SelectionChange(ByVal target As Range)
-Dim xWs As Worksheet
-Set xWs = Application.ActiveSheet
-
 On Error Resume Next
-
-Dim xCombox As OLEObject
-Set xCombox = xWs.OLEObjects("TempCombo")
-
-' Added this to auto select all text when activating the combox box.
-xCombox.SetFocus
-
-With xCombox
-    .ListFillRange = vbNullString
-    .LinkedCell = vbNullString
-    .Visible = False
-End With
-TempCombo_InitialValue = Empty
-
-
-Dim xStr As String
-Dim xArr
-
-
 If target.Rows.count = 1 And target.Columns.count = 1 And target.Validation.Type = xlValidateList Then
-    ' The target cell contains Data Validation.
-
-    target.Validation.InCellDropdown = False
-
-
-    ' Cancel the "SelectionChange" event.
-    Dim Cancel As Boolean
-    Cancel = True
-
-
-    xStr = target.Validation.Formula1
-    xStr = Right(xStr, Len(xStr) - 1)
-
-    If xStr = vbNullString Then Exit Sub
-
-    With xCombox
-        .Visible = True
-        .Left = target.Left
-        .Top = target.Top
-        .Width = target.Width + 5
-        .Height = target.Height + 5
-        .ListFillRange = xStr
-
-        If .ListFillRange = vbNullString Then
-            xArr = Split(xStr, ",")
-            Me.TempCombo.List = xArr
-        End If
-
-        .LinkedCell = target.Address
-        
-        TempCombo_InitialValue = target.Value
-
-    End With
-
-    xCombox.Activate
-    Me.TempCombo.DropDown
-
+    target.Validation.InCellDropdown = True
 End If
 End Sub
-
-
-
-
-
-
-
-
-
-
-
-
-
 

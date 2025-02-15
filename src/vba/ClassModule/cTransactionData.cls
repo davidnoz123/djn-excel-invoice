@@ -12,7 +12,6 @@ Option Explicit
 Public col_CustomerID As Long
 Public col_DeliveryDate As Long
 Public col_InvoiceDate As Long
-Public col_SubCustomerName As Long
 Public col_DESCRIPTION As Long
 Public col_QUANTITY As Long
 Public col_UnitPrice As Long
@@ -36,7 +35,6 @@ header = tws.Range(tws.Cells(1, colBeg), tws.Cells(1, colEnd))
 col_CustomerID = FindCol(header, "CustomerID", 1)
 col_DeliveryDate = FindCol(header, "DeliveryDate", 2)
 col_InvoiceDate = FindCol(header, "InvoiceDate", 3)
-col_SubCustomerName = FindCol(header, "SubCustomerName", 3)
 col_DESCRIPTION = FindCol(header, "Description", 4)
 col_QUANTITY = FindCol(header, "Quantity", 5)
 col_UnitPrice = FindCol(header, "UnitPrice", 6)

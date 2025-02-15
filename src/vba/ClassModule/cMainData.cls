@@ -12,6 +12,14 @@ Option Explicit
 Public INVOICE_TEMPLATE_DEFAULT As String
 Public INVOICE_EMAIL_TEMPLATE_DEFAULT As String
 
+Const INVOICE_EMAIL_TEMPLATE_DEFAULT_CONTENT = "<div>" + vbCrLf + _
+  "<p>Dear {RecipientName}</p>" + vbCrLf + _
+  "<p>Please find the attached invoice.</p>" + vbCrLf + _
+  "<p>Best Wishes</p>" + vbCrLf + _
+  "<p>Rosehaven Florist</p>" + vbCrLf + _
+"</div>"
+
+
 Dim wsMain As Worksheet
 Public fso As New FileSystemObject
 Public TopLeft As Range
@@ -27,7 +35,6 @@ Public col_StreetAddress As Long
 Public col_TownCityPostCode As Long
 Public col_Country As Long
 Public col_Phone As Long
-Public col_SubCustomerCommission As Long
 Public GST_RATE As Double
 
 'Dim NEXT_INVOICE_NUMBER_r As Range
@@ -101,7 +108,6 @@ col_StreetAddress = FindCol(d, "StreetAddress", 7)
 col_TownCityPostCode = FindCol(d, "TownCityPostCode", 8)
 col_Country = FindCol(d, "Country", 9)
 col_Phone = FindCol(d, "Phone", 10)
-col_SubCustomerCommission = FindCol(d, "SubCustomerCommission", 11)
 
 Dim i As Long
 For i = LBound(d) + 1 To UBound(d)
@@ -123,6 +129,13 @@ Private Sub Class_Initialize()
 EmailAddressRegExp.Pattern = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|""(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*"")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
 INVOICE_TEMPLATE_DEFAULT = "invoice_default.docx"
 INVOICE_EMAIL_TEMPLATE_DEFAULT = "email_default.html"
+Dim fso As New FileSystemObject
+If Not fso.FileExists(INVOICE_EMAIL_TEMPLATE_DEFAULT) Then
+    Dim ts As TextStream
+    Set ts = fso.CreateTextFile(INVOICE_EMAIL_TEMPLATE_DEFAULT)
+    Call ts.WriteLine(INVOICE_EMAIL_TEMPLATE_DEFAULT_CONTENT)
+    ts.Close
+End If
 
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 

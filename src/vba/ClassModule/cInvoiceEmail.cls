@@ -22,6 +22,7 @@ Dim OutlookApp As Outlook.Application: Set OutlookApp = SafeGetOutlookApp()
 Set email = OutlookApp.CreateItem(olMailItem)
 ' https://docs.microsoft.com/en-us/office/vba/api/outlook.attachments.add
 ' https://www.browserling.com/tools/image-to-base64
+On Error GoTo exit_with_failure
 With email
   .BodyFormat = olFormatHTML
   .Display
@@ -29,9 +30,12 @@ With email
   .To = master_record.EmailAddressx
   '.CC = "sdf@gamil.com"
   '.BCC = "hello@gamil.com;hi@gmail.com"
-  .Subject = "Avenrose Florist Invoice:" + format(invoice_number, "0000000")
+  .Subject = "Rosehaven Florist Invoice:" + format(invoice_number, "0000000")
   Call .Attachments.Add(invoice_pdf)
 End With
+Exit Sub
+exit_with_failure:
+Call ErrorExit("Unable to continue after failure creating email:'" + Err.Description + "'")
 End Sub
 
 Private Sub Class_Initialize()

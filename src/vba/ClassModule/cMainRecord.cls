@@ -18,7 +18,6 @@ Public StreetAddress As String
 Public TownCityPostCode As String
 Public Country As String
 Public Phone As String
-Public SubCustomerCommission As Variant
 
 Dim EmailAddress_v As Variant
 Dim EmailAddress_s As String
@@ -101,7 +100,6 @@ StreetAddress = d(row, Parent.col_StreetAddress)
 TownCityPostCode = d(row, Parent.col_TownCityPostCode)
 Country = d(row, Parent.col_Country)
 Phone = d(row, Parent.col_Phone)
-SubCustomerCommission = d(row, Parent.col_SubCustomerCommission)
 
 EmailAddress_v = Empty
 

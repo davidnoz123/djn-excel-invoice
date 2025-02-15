@@ -15,7 +15,6 @@ Public MainRecord As cMainRecord
 Public CustomerID As String
 Public InvoiceDate As Date
 Public DeliveryDate As Date
-Public SubCustomerName As String
 Public Description As String
 Public Quantity As Double
 Public UnitPrice As Double
@@ -45,7 +44,6 @@ If Me.CustomerID <> "" Then
   If mr Is Nothing Then
     Call x_error_exit(rowIndex, td.col_CustomerID, "Unknown CustomerID '" + CStr(Me.CustomerID) + "'", True)
   End If
-  Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(mr.SubCustomerCommission)
   Set Me.MainRecord = mr
   Dim vInvoiceDate As Variant: vInvoiceDate = rec(LBound(rec), td.col_InvoiceDate)
   If IsEmpty(vInvoiceDate) Or Not IsDate(vInvoiceDate) Then
@@ -55,15 +53,9 @@ If Me.CustomerID <> "" Then
   If IsEmpty(vDeliveryDate) Or Not IsDate(vDeliveryDate) Then
     Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid DeliveryDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
-  Dim vSubCustomerName As Variant: vSubCustomerName = rec(LBound(rec), td.col_SubCustomerName)
-  If Not bHasSubCustomerCommission And Not IsEmpty(vSubCustomerName) Then
-    Call x_error_exit(rowIndex, td.col_SubCustomerName, "Missing or invalid SubCustomerName in transaction record")
-  End If
-  
   
   Me.InvoiceDate = CDate(vInvoiceDate)
   Me.DeliveryDate = CDate(vDeliveryDate)
-  Me.SubCustomerName = vSubCustomerName
   Me.Description = rec(LBound(rec), td.col_DESCRIPTION)
   Me.Quantity = rec(LBound(rec), td.col_QUANTITY)
   Me.UnitPrice = rec(LBound(rec), td.col_UnitPrice)
