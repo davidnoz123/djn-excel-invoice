@@ -15,10 +15,6 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
-
-
-
-
 Option Explicit
 
 Dim transaction_records_ As Collection
@@ -59,7 +55,6 @@ Else
   Me.label.Caption = "No Records Selected"
 End If
 End Sub
-
 
 Private Sub UserForm_Initialize()
 EmailOptionNone.Value = True

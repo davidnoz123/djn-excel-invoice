@@ -13,6 +13,14 @@ Const DELAY_SECONDS_DEFAULT = 60# ' 2# 60#
 Const MAX_MINUTES_BETWEEN_UNSAVED_WORKBOOK_AND_LAST_BACKUP = 15#   ' 0.1 15#
 Const MAX_MINUTES_BETWEEN_SAVES = MAX_MINUTES_BETWEEN_UNSAVED_WORKBOOK_AND_LAST_BACKUP / 5#
 
+
+Function ThisWorkbook_Path() As String
+ThisWorkbook_Path = ThisWorkbook.path
+End Function
+Function ThisWorkbook_FullName() As String
+ThisWorkbook_FullName = ThisWorkbook_Path + "\" + ThisWorkbook.name
+End Function
+
 Sub SignalChange(x)
 change_count = change_count + 1
 End Sub
@@ -29,12 +37,10 @@ End Sub
 Sub Terminate(Optional caller As String = "None")
 Err.Clear
 On Error GoTo exit_with_failure
-'Debug.Print caller, earliesttime, "Beg"
 Application.OnTime earliesttime:=earliesttime, procedure:="xRunAutoBackup", schedule:=False
-'7 Debug.Print caller, earliesttime, "Suc"
 Exit Sub
 exit_with_failure:
-Debug.Print caller, Err.Description
+'Debug.Print caller, Err.Description
 End Sub
 
 Sub ThisWorkbook_SaveCopyAs(file_name)

@@ -42,22 +42,22 @@ Dim rec: rec = td.GetRecord(rowIndex)
 Me.CustomerID = Trim(rec(LBound(rec), td.col_CustomerID))
 If Me.CustomerID <> "" Then
   Dim mr As cMasterRecord: Set mr = master.RecordsByCustomerID(Me.CustomerID)
-  Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(mr.SubCustomerCommission)
   If mr Is Nothing Then
     Call x_error_exit(rowIndex, td.col_CustomerID, "Unknown CustomerID '" + CStr(Me.CustomerID) + "'", True)
   End If
+  Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(mr.SubCustomerCommission)
   Set Me.MasterRecord = mr
   Dim vInvoiceDate As Variant: vInvoiceDate = rec(LBound(rec), td.col_InvoiceDate)
   If IsEmpty(vInvoiceDate) Or Not IsDate(vInvoiceDate) Then
-    Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid date in transaction record. Provide dates in the form similar to '2021-07-21'")
+    Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid InvoiceDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
   Dim vDeliveryDate As Variant: vDeliveryDate = rec(LBound(rec), td.col_DeliveryDate)
   If IsEmpty(vDeliveryDate) Or Not IsDate(vDeliveryDate) Then
-    Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid date in transaction record. Provide dates in the form similar to '2021-07-21'")
+    Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid DeliveryDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
   Dim vSubCustomerName As Variant: vSubCustomerName = rec(LBound(rec), td.col_SubCustomerName)
   If Not bHasSubCustomerCommission And Not IsEmpty(vSubCustomerName) Then
-    Call x_error_exit(rowIndex, td.col_SubCustomerName, "Missing or invalid date in transaction record. Provide dates in the form similar to '2021-07-21'")
+    Call x_error_exit(rowIndex, td.col_SubCustomerName, "Missing or invalid SubCustomerName in transaction record")
   End If
   
   

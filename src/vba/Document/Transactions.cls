@@ -38,9 +38,6 @@ End If
 End Sub
 
 Private Sub Worksheet_SelectionChange(ByVal target As Range)
-'Update by Extendoffice: 2018/9/21
-' Update by Chris Brackett 2018-11-30
-
 Dim xWs As Worksheet
 Set xWs = Application.ActiveSheet
 
@@ -103,40 +100,6 @@ If target.Rows.count = 1 And target.Columns.count = 1 And target.Validation.Type
     Me.TempCombo.DropDown
 
 End If
-End Sub
-
-Private Sub TempComboHandleChange(ActiveCell_ As Range)
-On Error GoTo 99
-Dim r As Range: Set r = Application.Evaluate(ActiveCell_.Validation.Formula1)
-Dim f As Range: Set f = r.Find(ActiveCell_.Value, LookIn:=xlValues, LookAt:=xlWhole)
-If f Is Nothing Then
-  Call MsgBox("Unrecognised Value:" + CStr(ActiveCell_.Value), vbCritical + vbOKOnly, "Error")
-  ActiveCell_.Value = TempCombo_InitialValue
-Else
-  If Not IsEmpty(TempCombo_InitialValue) Then
-    If TempCombo_InitialValue <> ActiveCell_.Value Then
-      Dim ret As Long: ret = MsgBox("Change from:" + CStr(TempCombo_InitialValue), vbQuestion + vbOKCancel + vbDefaultButton2, "Confirm Change")
-      If ret = vbCancel Then
-        Debug.Print ActiveCell_.Value
-        ActiveCell_.Value = TempCombo_InitialValue
-      End If
-    End If
-  End If
-End If
-99:
-End Sub
-
-Private Sub TempCombo_KeyDown( _
-                ByVal KeyCode As MSForms.ReturnInteger, _
-                ByVal Shift As Integer)
-    Select Case KeyCode
-        Case 9  ' Tab key
-            Call TempComboHandleChange(Application.ActiveCell)
-            Application.ActiveCell.Offset(0, 1).Activate
-        Case 13 ' Pause key
-            Call TempComboHandleChange(Application.ActiveCell)
-            Application.ActiveCell.Offset(1, 0).Activate
-    End Select
 End Sub
 
 

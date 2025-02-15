@@ -10,15 +10,6 @@ Set SafeGetOutlookApp = New Outlook.Application
 20:
 End Function
 
-Function OfficeAccountEmail() As String
-Dim OutlookApp As Outlook.Application: Set OutlookApp = SafeGetOutlookApp()
-Dim olNS As Object
-Dim olFol As Object
-Set olNS = OutlookApp.GetNamespace("MAPI")
-Set olFol = olNS.GetDefaultFolder(olFolderInbox)
-OfficeAccountEmail = olFol.Parent.name '~~> most cases contains the email address
-End Function
-
 Function GetTransactionRecords(xx)
 ' Load the selected transaction records
 Dim cws As Worksheet: Set cws = Safe_ThisWorkbook_Worksheets("Customers")

@@ -1,6 +1,26 @@
 Attribute VB_Name = "Utils"
 Option Explicit
 
+Sub ErrorExit(msg As String)
+Call Logg("Error : " + Replace(msg, vbCrLf, " "))
+Dim sHostName As String
+sHostName = Environ$("computername")
+Select Case sHostName
+Case "ANZWL00001"
+  'Debug.Assert False
+Case Else
+  
+End Select
+MsgBox msg, vbCritical, "Error"
+End
+End Sub
+
+Sub Logg(msg As String)
+On Error Resume Next
+Debug.Print msg
+Application.StatusBar = Left(Replace(msg, vbLf, " "), 256)
+End Sub
+
 Function Safe_ThisWorkbook_Worksheets(name As String) As Worksheet
 On Error GoTo exit_with_failure
 Set Safe_ThisWorkbook_Worksheets = ThisWorkbook.Worksheets(name)
@@ -77,23 +97,6 @@ Else
   iCol_End = iCol_Beg + nCols - 1
 End If
 
-
-
-'For iRow_End = iRow_Beg To 999999
-'  DoEvents
-'  If ws.Cells(iRow_End, iCol_Beg) = "" Then
-'    iRow_End = iRow_End - 1
-'    Exit For
-'  End If
-'Next iRow_End
-
-'For iCol_End = iCol_Beg To 999999
-'  DoEvents
-'  If ws.Cells(iRow_Beg, iCol_End) = "" Then
-'    iCol_End = iCol_End - 1
-'    Exit For
-'  End If
-'Next iCol_End
 Dim a()
 If iRow_Beg = iRow_End And iCol_Beg = iCol_End Then
   ReDim a(1 To 1, 1 To 1): a(1, 1) = ws.Cells(iRow_Beg, iCol_Beg)
@@ -233,166 +236,4 @@ While ws.Shapes.count > 0
 Wend
 End Sub
 
-Public Function ShellSortCollectionOfString(c, Optional comp As VbCompareMethod = vbBinaryCompare) As Collection
-Dim v
-Dim i As Long
-If IsArray(c) Then
-  ReDim a(LBound(c) To UBound(c))
-  ReDim permIndices(LBound(c) To UBound(c))
-  For i = LBound(c) To UBound(c)
-    a(i) = c(i)
-    permIndices(i) = i
-  Next i
-Else
-  ReDim a(1 To c.count)
-  ReDim permIndices(1 To c.count)
-  i = 1
-  For Each v In c
-    a(i) = v
-    permIndices(i) = i
-    i = i + 1
-  Next v
-End If
-Call ShellSortAString(a, permIndices:=permIndices)
-Dim ret As New Collection
-For i = LBound(permIndices) To UBound(permIndices)
-  Call ret.Add(a(permIndices(i)))
-Next
-Set ShellSortCollectionOfString = ret
-End Function
 
-Public Sub ShellSortAString(a, Optional comp As VbCompareMethod = vbBinaryCompare, Optional permIndices = Empty)
-' Note for a,b as long: Compare(a,b) = -1   if Object(a) < Object(b)
-'                 Compare(a,b) = 0      if Object(a) = Object(b)
-'                 Compare(a,b) = 1      if Object(a) > Object(b)
-Dim f As Long
-Dim s As Long
-Dim t As Long
-Dim n2 As Long
-Dim ls As Long
-Dim i As Long
-Dim is2 As Long
-Dim j As Long
-Dim js As Long
-Dim l As Long
-Dim Done As Boolean
-
-Dim tmp
-      
-If IsEmpty(permIndices) Then
-  f = LBound(a)
-  l = UBound(a)
-  n2 = (l - f + 1) \ 2
-  s = 1023
-  For t = 1 To 10
-    If (s <= n2) Then
-      ls = l - s
-      For i = f To ls
-        is2 = i + s
-        j = i
-        js = is2
-        Done = (StrComp(a(js), a(j), comp) >= 0)
-        While Not Done
-          tmp = a(js): a(js) = a(j): a(j) = tmp
-          js = j
-          j = j - s
-          If (j < f) Then
-            Done = True
-          Else
-            Done = (StrComp(a(js), a(j), comp) >= 0)
-          End If
-        Wend
-      Next i
-    End If
-    s = s \ 2
-  Next t
-Else
-  f = LBound(permIndices)
-  l = UBound(permIndices)
-  n2 = (l - f + 1) \ 2
-  s = 1023
-  For t = 1 To 10
-    If (s <= n2) Then
-      ls = l - s
-      For i = f To ls
-        is2 = i + s
-        j = i
-        js = is2
-        Done = (StrComp(a(permIndices(js)), a(permIndices(j)), comp) >= 0)
-        While Not Done
-          tmp = permIndices(js): permIndices(js) = permIndices(j): permIndices(j) = tmp
-          js = j
-          j = j - s
-          If (j < f) Then
-            Done = True
-          Else
-            Done = (StrComp(a(permIndices(js)), a(permIndices(j)), comp) >= 0)
-          End If
-        Wend
-      Next i
-    End If
-    s = s \ 2
-  Next t
-End If
-
-End Sub
-
-Public Sub ShellSortPairwiseLogic(a, permIndices)
-' Note for a,b as long: Compare(a,b) = -1   if Object(a) < Object(b)
-'                 Compare(a,b) = 0      if Object(a) = Object(b)
-'                 Compare(a,b) = 1      if Object(a) > Object(b)
-Dim f As Long
-Dim s As Long
-Dim t As Long
-Dim n2 As Long
-Dim ls As Long
-Dim i As Long
-Dim is2 As Long
-Dim j As Long
-Dim js As Long
-Dim l As Long
-Dim Done As Boolean
-
-Dim tmp
-      
-f = LBound(permIndices)
-l = UBound(permIndices)
-n2 = (l - f + 1) \ 2
-s = 1023
-For t = 1 To 10
-  If (s <= n2) Then
-    ls = l - s
-    For i = f To ls
-      is2 = i + s
-      j = i
-      js = is2
-      Done = a(permIndices(js), permIndices(j))
-      While Not Done
-        tmp = permIndices(js): permIndices(js) = permIndices(j): permIndices(j) = tmp
-        js = j
-        j = j - s
-        If (j < f) Then
-          Done = True
-        Else
-          Done = a(permIndices(js), permIndices(j))
-        End If
-      Wend
-    Next i
-  End If
-  s = s \ 2
-Next t
-
-End Sub
-
-
-Function WorkbookIsOpen(sPath As String, ByRef wb As Workbook) As Boolean
-Dim fso As New FileSystemObject
-Dim sName As String: sName = fso.GetFileName(sPath)
-On Error GoTo 10
-Set wb = Application.Workbooks(sName)
-WorkbookIsOpen = True
-Exit Function
-10:
-Set wb = Nothing
-WorkbookIsOpen = False
-End Function
