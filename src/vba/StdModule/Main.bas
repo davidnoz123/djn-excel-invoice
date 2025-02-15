@@ -15,7 +15,7 @@ Function GetTransactionRecords(xx)
 Dim cws As Worksheet: Set cws = Safe_ThisWorkbook_Worksheets("Customers")
 Dim tws As Worksheet: Set tws = Safe_ThisWorkbook_Worksheets("Transactions")
 
-Dim master As New cMasterData
+Dim master As New cMainData
 Call master.Init(cws.Cells(1, 1))
 Dim td As New cTransactionData
 Call td.Initx(tws)
@@ -41,16 +41,16 @@ End Function
 
 Sub aProcessRun_Callback(transaction_records As Collection)
 ' Process the transaction records in transaction_records
-Dim master As New cMasterData
+Dim master As New cMainData
 
 Dim tws As Worksheet: Set tws = Safe_ThisWorkbook_Worksheets("Transactions")
 
 Dim t As cTransactionRecord
 Dim v
 For Each t In transaction_records
-  v = t.MasterRecord.EmailAddressx
-  v = t.MasterRecord.EmailTemplatex
-  v = t.MasterRecord.InvoiceTemplatex
+  v = t.MainRecord.EmailAddressx
+  v = t.MainRecord.EmailTemplatex
+  v = t.MainRecord.InvoiceTemplatex
 Next t
 
 Dim custId2Trans As New Scripting.Dictionary
@@ -60,8 +60,8 @@ Dim count As Long, invoice_count As Long
 
 invoice_count = 0
 For Each t In transaction_records
-  MainForm.Do_Events "Loading Invoice Template " + t.MasterRecord.InvoiceTemplatex + " ..."
-  Call itc.GetInvoiceTemplate(t.MasterRecord.InvoiceTemplatex)
+  MainForm.Do_Events "Loading Invoice Template " + t.MainRecord.InvoiceTemplatex + " ..."
+  Call itc.GetInvoiceTemplate(t.MainRecord.InvoiceTemplatex)
   Dim date2Trans  As Scripting.Dictionary
   If custId2Trans.Exists(t.CustomerID) Then
     Set date2Trans = custId2Trans(t.CustomerID)
@@ -100,7 +100,7 @@ For Each CustomerID In custId2Trans.Keys()
     
     MainForm.Do_Events "Getting Invoice Template ..."
     Set transColl = date2Trans(date_)
-    Dim mr As cMasterRecord: Set mr = transColl(1).MasterRecord
+    Dim mr As cMainRecord: Set mr = transColl(1).MainRecord
     Dim invoice_number As Long: invoice_number = master.NextInvoiceNumber
     Dim it As cInvoiceTemplate: Set it = itc.GetInvoiceTemplate(mr.InvoiceTemplatex)
         

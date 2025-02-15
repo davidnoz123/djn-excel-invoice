@@ -10,7 +10,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Public rowIndex As Long
-Public MasterRecord As cMasterRecord
+Public MainRecord As cMainRecord
 
 Public CustomerID As String
 Public InvoiceDate As Date
@@ -35,18 +35,18 @@ End If
 Call ErrorExit(msg)
 End Sub
 
-Sub Inity(master As cMasterData, td As cTransactionData, rowIndex_)
+Sub Inity(master As cMainData, td As cTransactionData, rowIndex_)
 Set Parent = td
 rowIndex = rowIndex_
 Dim rec: rec = td.GetRecord(rowIndex)
 Me.CustomerID = Trim(rec(LBound(rec), td.col_CustomerID))
 If Me.CustomerID <> "" Then
-  Dim mr As cMasterRecord: Set mr = master.RecordsByCustomerID(Me.CustomerID)
+  Dim mr As cMainRecord: Set mr = master.RecordsByCustomerID(Me.CustomerID)
   If mr Is Nothing Then
     Call x_error_exit(rowIndex, td.col_CustomerID, "Unknown CustomerID '" + CStr(Me.CustomerID) + "'", True)
   End If
   Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(mr.SubCustomerCommission)
-  Set Me.MasterRecord = mr
+  Set Me.MainRecord = mr
   Dim vInvoiceDate As Variant: vInvoiceDate = rec(LBound(rec), td.col_InvoiceDate)
   If IsEmpty(vInvoiceDate) Or Not IsDate(vInvoiceDate) Then
     Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid InvoiceDate in transaction record. Provide dates in the form similar to '2021-07-21'")

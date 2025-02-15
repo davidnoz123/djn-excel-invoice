@@ -223,7 +223,7 @@ End If
 StringifyInvoiceContactDetail = ret
 End Function
 
-Private Sub ReplaceTokens(doc As Word.Document, master_record As cMasterRecord, invoice_number As Long, date_ As Date)
+Private Sub ReplaceTokens(doc As Word.Document, master_record As cMainRecord, invoice_number As Long, date_ As Date)
 ' Substitute the variable strings in the document
 Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(master_record.SubCustomerCommission)
 Dim search_and_replace As New Scripting.Dictionary
@@ -244,7 +244,7 @@ End Sub
 
 Private Sub Table_Standard(doc As Word.Document, transColl As Collection)
 
-Dim master_record As cMasterRecord: Set master_record = transColl(1).MasterRecord
+Dim master_record As cMainRecord: Set master_record = transColl(1).MainRecord
 
 ' Get the items table in the document
 Dim a:  a = Array( _
@@ -281,8 +281,8 @@ Dim bef_gst_sum As Double: bef_gst_sum = 0#
 Dim aft_gst_sum As Double: aft_gst_sum = 0#
 Dim gst_sum As Double: gst_sum = 0#
 For Each tr In transColl
-  If Not master_record Is tr.MasterRecord Then
-    Call ErrorExit("Not master_record Is tr.MasterRecord")
+  If Not master_record Is tr.MainRecord Then
+    Call ErrorExit("Not master_record Is tr.MainRecord")
   End If
   i = i + 1
   If i >= row_first_summary - 2 Then
@@ -324,7 +324,7 @@ End Sub
 Private Sub Table_SubCusts(doc As Word.Document, transColl As Collection)
 '
 
-Dim master_record As cMasterRecord: Set master_record = transColl(1).MasterRecord
+Dim master_record As cMainRecord: Set master_record = transColl(1).MainRecord
 
 ' Get the items table in the document
 Dim a:  a = Array( _
@@ -357,8 +357,8 @@ Dim bef_gst_sum As Double: bef_gst_sum = 0#
 Dim aft_gst_sum As Double: aft_gst_sum = 0#
 Dim gst_sum As Double: gst_sum = 0#
 For Each tr In transColl
-  If Not master_record Is tr.MasterRecord Then
-    Call ErrorExit("Not master_record Is tr.MasterRecord")
+  If Not master_record Is tr.MainRecord Then
+    Call ErrorExit("Not master_record Is tr.MainRecord")
   End If
   i = i + 1
   If i >= 1 Then
@@ -403,7 +403,7 @@ End Sub
 Function CreateInvoiceDocument(transColl As Collection, invoice_number As Long, date_ As Date) As Word.Document
 Dim doc As Word.Document
 Set doc = template.Application.Documents.Add(template.FullName)
-Dim master_record As cMasterRecord: Set master_record = transColl(1).MasterRecord
+Dim master_record As cMainRecord: Set master_record = transColl(1).MainRecord
 Call ReplaceTokens(doc, master_record, invoice_number, date_)
 Dim bHasSubCustomerCommission As Boolean: bHasSubCustomerCommission = Not IsEmpty(master_record.SubCustomerCommission)
 If bHasSubCustomerCommission Then
