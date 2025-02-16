@@ -157,3 +157,5 @@ Dim transaction_records As Collection: Set transaction_records = GetTransactionR
 MainForm.ResetState transaction_records
 MainForm.Show
 End Sub
+
+

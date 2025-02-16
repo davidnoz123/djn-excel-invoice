@@ -17,11 +17,6 @@ Attribute VB_Exposed = False
 
 
 
-
-
-
-
-
 Option Explicit
 
 Private WithEvents Calendar1 As cCalendar
@@ -105,3 +100,4 @@ Sub CloseDatePicker(Save As Boolean)
     Set target = Nothing
     Me.Hide
 End Sub
+
