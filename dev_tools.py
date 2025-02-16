@@ -755,6 +755,7 @@ if True and __name__ == "__main__":
     wb = xl.Workbooks("rosehaven_florist_junk.xlsm")
     #wb = xl.Workbooks("Journal.xlsm")
     #VBAExport(wb)
+    VBAIO.VBAExport(wb)
     wb = VBAIO.VBAImport(wb)
     VBAIO.VBAExport(wb)
     
