@@ -170,7 +170,7 @@ GoTo 20
 doc.Application.Activate
 doc.Activate
 r.Select
-Call ErrorExit("")
+Call ErrorExit("Error copying and pasting:'" + Err.Description + "'")
 20:
 Dim tNew As Word.Table: Set tNew = r.Tables(1)
 Dim i As Long
@@ -183,7 +183,7 @@ Next i
 doc.Application.Activate
 doc.Activate
 r.Select
-Call ErrorExit("")
+Call ErrorExit("Failed to find table")
 found_new_table:
 End Sub
 
@@ -207,7 +207,7 @@ For Each k In search_and_replace.Keys()
     doc.Application.Activate
     doc.Activate
     r.Select
-    Call ErrorExit("")
+    Call ErrorExit("Failure in search and replace")
 20:
   Wend
 99:

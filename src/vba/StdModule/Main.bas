@@ -127,12 +127,19 @@ For Each CustomerID In custId2Trans.Keys()
       If MainForm.EmailOptionCreateOnly Or MainForm.EmailOptionSend Then
         MainForm.Do_Events "Creating Email ..."
         Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
-        Call ie.Init(invoice_pdf, mr, invoice_number, CDate(date_))
+        Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
+        Call ie.Inite(invoice_pdf, mr, invoice_number, CDate(date_), display_email)
       End If
       
       If MainForm.EmailOptionSend Then
         MainForm.Do_Events "Sending Email ..."
+        On Error GoTo 10
         ie.email.Send
+        On Error GoTo 0
+        GoTo 20
+10:
+        Call ErrorExit("Failure sending email:'" + Err.Description + "'")
+20:
       End If
     End If
     
@@ -143,7 +150,6 @@ For Each CustomerID In custId2Trans.Keys()
     
   Next date_
 Next CustomerID
-
 End Sub
 
 Sub RunReport()
