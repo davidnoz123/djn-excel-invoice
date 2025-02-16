@@ -16,7 +16,7 @@ Const INVOICE_EMAIL_TEMPLATE_DEFAULT_CONTENT = "<div>" + vbCrLf + _
   "<p>Dear {RecipientName}</p>" + vbCrLf + _
   "<p>Please find the attached invoice.</p>" + vbCrLf + _
   "<p>Best Wishes</p>" + vbCrLf + _
-  "<p>Rosehaven Florist</p>" + vbCrLf + _
+  "<p>{YourBusinessName}</p>" + vbCrLf + _
 "</div>"
 
 
@@ -35,9 +35,11 @@ Public col_StreetAddress As Long
 Public col_TownCityPostCode As Long
 Public col_Country As Long
 Public col_Phone As Long
-Public GST_RATE As Double
 
-'Dim NEXT_INVOICE_NUMBER_r As Range
+
+Public TAX_RATE As Double
+Public SUBJECT_LINE_PREFIX As String
+Public YOUR_BUSINESS_NAME As String
 
 Dim NEXT_INVOICE_NUMBER_txt As String
 
@@ -48,6 +50,7 @@ Dim rec_by_customer_id As Scripting.Dictionary
 Public EmailAddressRegExp As New VBScript_RegExp_55.RegExp
 
 Function NextInvoiceNumber() As Long
+' NOTE: We could include this state in the Excel spreadsheet but it would mean the workbook needs to be saved after each run (which may not always happen)
 Dim ts As TextStream
 Dim ret As Long
 If Not fso.FileExists(NEXT_INVOICE_NUMBER_txt) Then
@@ -139,20 +142,9 @@ End If
 
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 
+TAX_RATE = SafeFindKeyValueInUsedRange(wsMain, "TAX_RATE")
+YOUR_BUSINESS_NAME = SafeFindKeyValueInUsedRange(wsMain, "YOUR_BUSINESS_NAME", "Your Business")
+SUBJECT_LINE_PREFIX = SafeFindKeyValueInUsedRange(wsMain, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
 NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + "NEXT_INVOICE_NUMBER.txt"
-'Set NEXT_INVOICE_NUMBER_r = wsMain.UsedRange.Find("NEXT_INVOICE_NUMBER")
-'If NEXT_INVOICE_NUMBER_r Is Nothing Then
-'  wsMain.Parent.Activate
-'  wsMain.Activate
-'  Call ErrorExit("Missing cell for NEXT_INVOICE_NUMBER")
-'End If
-'Set NEXT_INVOICE_NUMBER_r = wsMain.Cells(NEXT_INVOICE_NUMBER_r.row, NEXT_INVOICE_NUMBER_r.Column + 1)
-Dim GST_RATE_r As Range: Set GST_RATE_r = wsMain.UsedRange.Find("GST_RATE")
-If GST_RATE_r Is Nothing Then
-  wsMain.Parent.Activate
-  wsMain.Activate
-  Call ErrorExit("Missing cell for GST_RATE")
-End If
-GST_RATE = wsMain.Cells(GST_RATE_r.row, GST_RATE_r.Column + 1)
 
 End Sub

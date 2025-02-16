@@ -18,7 +18,7 @@ Public DeliveryDate As Date
 Public Description As String
 Public Quantity As Double
 Public UnitPrice As Double
-Public status As String
+Public ProcessedWhen As String
 Public InvoiceNo As Long
 
 Public Parent As cTransactionData
@@ -59,7 +59,7 @@ If Me.CustomerID <> "" Then
   Me.Description = rec(LBound(rec), td.col_DESCRIPTION)
   Me.Quantity = rec(LBound(rec), td.col_QUANTITY)
   Me.UnitPrice = rec(LBound(rec), td.col_UnitPrice)
-  Me.status = rec(LBound(rec), td.col_Status)
+  Me.ProcessedWhen = rec(LBound(rec), td.col_ProcessedWhen)
   Me.InvoiceNo = rec(LBound(rec), td.col_InvoiceNo)
   
 End If

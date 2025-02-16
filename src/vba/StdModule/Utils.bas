@@ -229,3 +229,17 @@ End If
 Exit Function
 exit_with_failure:
 End Function
+
+Function SafeFindKeyValueInUsedRange(ws As Worksheet, key As String, Optional default_value)
+Dim rr As Range: Set rr = ws.UsedRange.Find(key)
+If Not rr Is Nothing Then
+    SafeFindKeyValueInUsedRange = ws.Cells(rr.row, rr.Column + 1)
+Else
+    If IsMissing(default_value) Then
+        ws.Parent.Activate
+        ws.Activate
+        Call ErrorExit("Missing key-value cell for key:'" + key + "'")
+    End If
+    SafeFindKeyValueInUsedRange = default_value
+End If
+End Function

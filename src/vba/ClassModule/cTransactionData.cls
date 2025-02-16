@@ -15,7 +15,7 @@ Public col_InvoiceDate As Long
 Public col_DESCRIPTION As Long
 Public col_QUANTITY As Long
 Public col_UnitPrice As Long
-Public col_Status As Long
+Public col_ProcessedWhen As Long
 Public col_InvoiceNo As Long
 Public header
 
@@ -38,6 +38,6 @@ col_InvoiceDate = FindCol(header, "InvoiceDate", 3)
 col_DESCRIPTION = FindCol(header, "Description", 4)
 col_QUANTITY = FindCol(header, "Quantity", 5)
 col_UnitPrice = FindCol(header, "UnitPrice", 6)
-col_Status = FindCol(header, "Status", 8)
+col_ProcessedWhen = FindCol(header, "ProcessedWhen", 8)
 col_InvoiceNo = FindCol(header, "InvoiceNo", 9)
 End Sub

@@ -128,7 +128,7 @@ For Each CustomerID In custId2Trans.Keys()
         MainForm.Do_Events "Creating Email ..."
         Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
         Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
-        Call ie.Inite(invoice_pdf, mr, invoice_number, CDate(date_), display_email)
+        Call ie.Inite(invoice_pdf, master, mr, invoice_number, CDate(date_), display_email, master.SUBJECT_LINE_PREFIX)
       End If
       
       If MainForm.EmailOptionSend Then
@@ -144,7 +144,7 @@ For Each CustomerID In custId2Trans.Keys()
     End If
     
     For Each t In transColl
-      tws.Cells(t.rowIndex, t.Parent.col_Status) = now_str
+      tws.Cells(t.rowIndex, t.Parent.col_ProcessedWhen) = now_str
       tws.Cells(t.rowIndex, t.Parent.col_InvoiceNo) = invoice_number
     Next t
     

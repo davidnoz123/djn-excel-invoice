@@ -293,7 +293,7 @@ For Each tr In transColl
   t.Rows(i).Cells(col_DELIVERY_DATE).Range = format(tr.DeliveryDate, "yyyy-mm-dd")
   
   Dim aft_gst As Double: aft_gst = tr.UnitPrice
-  Dim bef_gst As Double: bef_gst = Round(aft_gst / (1# + master_record.Parent.GST_RATE), 2)
+  Dim bef_gst As Double: bef_gst = Round(aft_gst / (1# + master_record.Parent.TAX_RATE), 2)
   
   t.Rows(i).Cells(col_UNIT_PRICE).Range = FormatCurrency(bef_gst, 2)
   
