@@ -8,12 +8,8 @@ End Sub
 Private Function ControlGenericHandler_CreateObject(sClass As String) As Object
 Dim o As Object
 Select Case LCase(Trim(sClass))
-'Case "suppchinstancegenerator": Set o = New SuppChInstanceGenerator
-'Case "gamsmodel": Set o = New GAMSModel
 Case "ribbondocumentation": Set o = New RibbonDocumentation
-'Case "pyomomodel": Set o = New PYOMOModel
-'Case "datauploader": Set o = New DataUploader
-Case "projectassignmentreport": Set o = New ProjectAssignmentReport
+Case "ribboncontrolwrapper": Set o = New RibbonControlWrapper
 Case Else
   Call ErrorExit("Handlers.ControlGenericHandler1:Unexpected class name:" + sClass)
 End Select
@@ -34,20 +30,6 @@ Exit Sub
 10:
 Call ErrorExit("Handlers.ControlGenericHandler1:" + Err.Description)
 End Sub
-
-'<dropDown id="ClassName.MethodName.UserValue"
-'   getLabel="CustomUI_GetLabel"
-'   getItemCount="CustomUI_GetItemCount"
-'   getItemLabel="CustomUI_GetItemLabel"
-'   getSelectedItemIndex="CustomUI_GetSelectedItemIndex"
-'   onAction="CustomUI_OnAction"
-' />
-
-'<editBox id="ClassName.MethodName.UserValue"
-'   getLabel="CustomUI_GetLabel"
-'   getText="CustomUI_GetText"
-'   onChange="CustomUI_OnChange"
-' />
 
 Private Sub CustomUI_GetLabel(control As IRibbonControl, ByRef returnedVal)
 Call ControlGenericHandler1(control, "getLabel", -1, returnedVal)

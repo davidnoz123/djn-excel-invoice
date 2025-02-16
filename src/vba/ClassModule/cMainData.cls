@@ -145,6 +145,6 @@ Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 TAX_RATE = SafeFindKeyValueInUsedRange(wsMain, "TAX_RATE")
 YOUR_BUSINESS_NAME = SafeFindKeyValueInUsedRange(wsMain, "YOUR_BUSINESS_NAME", "Your Business")
 SUBJECT_LINE_PREFIX = SafeFindKeyValueInUsedRange(wsMain, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
-NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + "NEXT_INVOICE_NUMBER.txt"
+NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInUsedRange(wsMain, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")
 
 End Sub

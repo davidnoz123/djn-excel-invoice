@@ -15,7 +15,7 @@ Const MAX_MINUTES_BETWEEN_SAVES = MAX_MINUTES_BETWEEN_UNSAVED_WORKBOOK_AND_LAST_
 
 
 Function ThisWorkbook_Path() As String
-ThisWorkbook_Path = ThisWorkbook.path
+ThisWorkbook_Path = ThisWorkbook.Path
 End Function
 Function ThisWorkbook_FullName() As String
 ThisWorkbook_FullName = ThisWorkbook_Path + "\" + ThisWorkbook.name

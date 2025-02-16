@@ -132,7 +132,7 @@ End If
 Next tableIndex
 doc.Application.Activate
 doc.Activate
-Call ErrorExit("Table missing header:" + Join(a, ", "))
+Call ErrorExit("Missing table in Word Document with header:" + Join(a, ", ") + vbCrLf + "See Word Document:" + vbCrLf + "'" + doc.Path + "\" + doc.name + "'")
 found:
 End Sub
 
@@ -252,7 +252,7 @@ Dim a:  a = Array( _
 "UNIT PRICE", _
 "TOTAL", _
 "SUBTOTAL", _
-"GST", _
+"TAX", _
 "TOTAL DUE" _
 )
 Dim m_n As Scripting.Dictionary
@@ -264,20 +264,20 @@ Dim col_DELIVERY_DATE As Long: col_DELIVERY_DATE = m_n("DELIVERY DATE")
 Dim col_UNIT_PRICE As Long: col_UNIT_PRICE = m_n("UNIT PRICE")
 Dim col_TOTAL As Long: col_TOTAL = m_n("TOTAL")
 Dim row_SUBTOTAL As Long: row_SUBTOTAL = m_n("SUBTOTAL")
-Dim row_GST As Long: row_GST = m_n("GST")
+Dim row_TAX As Long: row_TAX = m_n("TAX")
 Dim row_TOTAL_DUE As Long: row_TOTAL_DUE = m_n("TOTAL DUE")
 
-Dim row_last_summary As Long: row_last_summary = WorksheetFunction.Max(row_SUBTOTAL, row_GST, row_TOTAL_DUE)
+Dim row_last_summary As Long: row_last_summary = WorksheetFunction.Max(row_SUBTOTAL, row_TAX, row_TOTAL_DUE)
 
-Dim row_first_summary As Long: row_first_summary = WorksheetFunction.Min(row_SUBTOTAL, row_GST, row_TOTAL_DUE)
+Dim row_first_summary As Long: row_first_summary = WorksheetFunction.Min(row_SUBTOTAL, row_TAX, row_TOTAL_DUE)
 Dim row_first_summary_orig As Long:: row_first_summary_orig = row_first_summary
 
 ' Populate the items table
 Dim tr As cTransactionRecord
 Dim i As Long: i = 1
-Dim bef_gst_sum As Double: bef_gst_sum = 0#
-Dim aft_gst_sum As Double: aft_gst_sum = 0#
-Dim gst_sum As Double: gst_sum = 0#
+Dim bef_tax_sum As Double: bef_tax_sum = 0#
+Dim aft_tax_sum As Double: aft_tax_sum = 0#
+Dim tax_sum As Double: tax_sum = 0#
 For Each tr In transColl
   If Not master_record Is tr.MainRecord Then
     Call ErrorExit("Not master_record Is tr.MainRecord")
@@ -292,30 +292,30 @@ For Each tr In transColl
   t.Rows(i).Cells(col_DESCRIPTION).Range = CStr(tr.Description)
   t.Rows(i).Cells(col_DELIVERY_DATE).Range = format(tr.DeliveryDate, "yyyy-mm-dd")
   
-  Dim aft_gst As Double: aft_gst = tr.UnitPrice
-  Dim bef_gst As Double: bef_gst = Round(aft_gst / (1# + master_record.Parent.TAX_RATE), 2)
+  Dim aft_tax As Double: aft_tax = tr.UnitPrice
+  Dim bef_tax As Double: bef_tax = Round(aft_tax / (1# + master_record.Parent.TAX_RATE), 2)
   
-  t.Rows(i).Cells(col_UNIT_PRICE).Range = FormatCurrency(bef_gst, 2)
+  t.Rows(i).Cells(col_UNIT_PRICE).Range = FormatCurrency(bef_tax, 2)
   
-  aft_gst = tr.Quantity * aft_gst
-  bef_gst = tr.Quantity * bef_gst
+  aft_tax = tr.Quantity * aft_tax
+  bef_tax = tr.Quantity * bef_tax
   
-  t.Rows(i).Cells(col_TOTAL).Range = FormatCurrency(bef_gst, 2)
+  t.Rows(i).Cells(col_TOTAL).Range = FormatCurrency(bef_tax, 2)
   
-  bef_gst_sum = bef_gst_sum + bef_gst
-  aft_gst_sum = aft_gst_sum + aft_gst
-  gst_sum = gst_sum + (aft_gst - bef_gst)
+  bef_tax_sum = bef_tax_sum + bef_tax
+  aft_tax_sum = aft_tax_sum + aft_tax
+  tax_sum = tax_sum + (aft_tax - bef_tax)
 Next tr
 
 t.Rows(row_first_summary - 1).Delete
 
 row_SUBTOTAL = row_SUBTOTAL + row_first_summary - row_first_summary_orig - 1
-row_GST = row_GST + row_first_summary - row_first_summary_orig - 1
+row_TAX = row_TAX + row_first_summary - row_first_summary_orig - 1
 row_TOTAL_DUE = row_TOTAL_DUE + row_first_summary - row_first_summary_orig - 1
 
-t.Rows(row_SUBTOTAL).Cells(t.Rows(row_SUBTOTAL).Cells.count).Range = FormatCurrency(bef_gst_sum, 2)
-t.Rows(row_GST).Cells(t.Rows(row_GST).Cells.count).Range = FormatCurrency(gst_sum, 2)
-t.Rows(row_TOTAL_DUE).Cells(t.Rows(row_TOTAL_DUE).Cells.count).Range = FormatCurrency(aft_gst_sum, 2)
+t.Rows(row_SUBTOTAL).Cells(t.Rows(row_SUBTOTAL).Cells.count).Range = FormatCurrency(bef_tax_sum, 2)
+t.Rows(row_TAX).Cells(t.Rows(row_TAX).Cells.count).Range = FormatCurrency(tax_sum, 2)
+t.Rows(row_TOTAL_DUE).Cells(t.Rows(row_TOTAL_DUE).Cells.count).Range = FormatCurrency(aft_tax_sum, 2)
 
 End Sub
 

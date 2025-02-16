@@ -19,6 +19,7 @@ Attribute VB_Exposed = False
 
 
 
+
 Option Explicit
 
 Dim transaction_records_ As Collection
