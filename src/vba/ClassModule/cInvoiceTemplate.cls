@@ -75,6 +75,7 @@ Set template = SafeGetTemplateDocument(template_file)
 End Sub
 
 Sub GetItemsTable(doc As Word.Document, ByRef tableIndex As Long, ByRef mn As Scripting.Dictionary, a, Optional ByVal row_start_indicator_string As String = vbNullString)
+Dim doc_full_path As String: doc_full_path = doc.Path + "\" + doc.name
 Dim mx As New Scripting.Dictionary
 Dim i As Long
 Dim mm As New Scripting.Dictionary
@@ -130,9 +131,7 @@ If mn.count > mx.count Then
   Set mx = mn
 End If
 Next tableIndex
-doc.Application.Activate
-doc.Activate
-Call ErrorExit("Missing table in Word Document with header:" + Join(a, ", ") + vbCrLf + "See Word Document:" + vbCrLf + "'" + doc.Path + "\" + doc.name + "'")
+Call ErrorExitWithWord(doc, "Missing table in Word Document with header:" + Join(a, ", ") + vbCrLf + "See Word Document:" + vbCrLf + "'" + doc_full_path + "'")
 found:
 End Sub
 
@@ -157,20 +156,14 @@ Set r = doc.Content
 r.Find.Text = "{Items Table}"
 r.Find.Execute
 If Not r.Find.found Then
-  doc.Application.Activate
-  doc.Activate
-  r.Select
-  Call ErrorExit("Missing string '{Items Table}' in document")
+  Call ErrorExitWithWord(doc, "Missing string '{Items Table}' in document", r)
 End If
 On Error GoTo 10
 t.Range.Copy
 Call r.PasteAndFormat(wdFormatOriginalFormatting)
 GoTo 20
 10:
-doc.Application.Activate
-doc.Activate
-r.Select
-Call ErrorExit("Error copying and pasting:'" + Err.Description + "'")
+Call ErrorExitWithWord(doc, "Error copying and pasting:'" + Err.Description + "'", r)
 20:
 Dim tNew As Word.Table: Set tNew = r.Tables(1)
 Dim i As Long
@@ -180,10 +173,7 @@ For i = 1 To doc.Tables.count
     GoTo found_new_table
   End If
 Next i
-doc.Application.Activate
-doc.Activate
-r.Select
-Call ErrorExit("Failed to find table")
+Call ErrorExitWithWord(doc, "Failed to find table", r)
 found_new_table:
 End Sub
 
@@ -204,10 +194,7 @@ For Each k In search_and_replace.Keys()
     r = search_and_replace(k)
     GoTo 20
 10:
-    doc.Application.Activate
-    doc.Activate
-    r.Select
-    Call ErrorExit("Failure in search and replace")
+    Call ErrorExitWithWord(doc, "Failure in search and replace", r)
 20:
   Wend
 99:

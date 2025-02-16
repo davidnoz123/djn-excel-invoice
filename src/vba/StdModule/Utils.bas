@@ -243,3 +243,12 @@ Else
     SafeFindKeyValueInUsedRange = default_value
 End If
 End Function
+
+Sub ErrorExitWithWord(doc As Word.Document, msg As String, Optional r As Word.Range = Nothing)
+On Error GoTo 10
+doc.Application.Activate
+doc.Activate
+If Not r Is Nothing Then r.Select
+10:
+Call ErrorExit(msg)
+End Sub
