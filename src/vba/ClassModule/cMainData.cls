@@ -37,7 +37,6 @@ Public col_Country As Long
 Public col_Phone As Long
 
 
-Public TAX_RATE As Double
 Public SUBJECT_LINE_PREFIX As String
 Public YOUR_BUSINESS_NAME As String
 
@@ -142,7 +141,6 @@ End If
 
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 
-TAX_RATE = SafeFindKeyValueInUsedRange(wsMain, "TAX_RATE")
 YOUR_BUSINESS_NAME = SafeFindKeyValueInUsedRange(wsMain, "YOUR_BUSINESS_NAME", "Your Business")
 SUBJECT_LINE_PREFIX = SafeFindKeyValueInUsedRange(wsMain, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
 NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInUsedRange(wsMain, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")

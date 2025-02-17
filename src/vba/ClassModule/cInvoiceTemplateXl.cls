@@ -9,10 +9,11 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Const INVOICE_TABLE_TEMPLATES_XLS = "invoice_templates.xlsx"
-
 ' https://create.microsoft.com/en-us/templates/invoices
 ' https://create.microsoft.com/en-us/search?filters=invoices
+
+Const INVOICE_TABLE_TEMPLATES_XLS = "invoice_templates.xlsx"
+
 Dim fso As New FileSystemObject
 Dim ws_tmp As Worksheet
 
