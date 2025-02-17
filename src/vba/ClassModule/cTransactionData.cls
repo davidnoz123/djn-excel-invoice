@@ -22,11 +22,12 @@ Public header
 Public tws As Worksheet
 Public colBeg As Long
 Public colEnd As Long
+Public MappableTransactionColumnSet As New Scripting.Dictionary
 
 Function GetRecord(rowIndex)
 GetRecord = tws.Range(tws.Cells(rowIndex, colBeg), tws.Cells(rowIndex, colEnd))
 End Function
-    
+
 Sub Initx(ws As Worksheet)
 Set tws = ws
 colBeg = tws.UsedRange.Columns(1).Column
@@ -40,4 +41,11 @@ col_QUANTITY = FindCol(header, "Quantity", 5)
 col_UnitPrice = FindCol(header, "UnitPrice", 6)
 col_ProcessedWhen = FindCol(header, "ProcessedWhen", 8)
 col_InvoiceNo = FindCol(header, "InvoiceNo", 9)
+End Sub
+
+Private Sub Class_Initialize()
+Call MappableTransactionColumnSet.Add("DeliveryDate", Empty)
+Call MappableTransactionColumnSet.Add("Description", Empty)
+Call MappableTransactionColumnSet.Add("Quantity", Empty)
+Call MappableTransactionColumnSet.Add("UnitPrice", Empty)
 End Sub

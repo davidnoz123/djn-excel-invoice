@@ -37,10 +37,12 @@ Public col_Country As Long
 Public col_Phone As Long
 
 
+Public TAX_RATE As Double
 Public SUBJECT_LINE_PREFIX As String
 Public YOUR_BUSINESS_NAME As String
 
 Dim NEXT_INVOICE_NUMBER_txt As String
+Public INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP As New Scripting.Dictionary
 
 Dim d
 Dim row_by_customer_id As Scripting.Dictionary
@@ -141,8 +143,60 @@ End If
 
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 
-YOUR_BUSINESS_NAME = SafeFindKeyValueInUsedRange(wsMain, "YOUR_BUSINESS_NAME", "Your Business")
-SUBJECT_LINE_PREFIX = SafeFindKeyValueInUsedRange(wsMain, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
-NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInUsedRange(wsMain, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")
+TAX_RATE = SafeFindKeyValueInRange(wsMain.UsedRange, "TAX_RATE")
+YOUR_BUSINESS_NAME = SafeFindKeyValueInRange(wsMain.UsedRange, "YOUR_BUSINESS_NAME", "Your Business")
+SUBJECT_LINE_PREFIX = SafeFindKeyValueInRange(wsMain.UsedRange, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
+NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInRange(wsMain.UsedRange, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")
+
+Dim td As New cTransactionData
+
+Dim tmp As New Scripting.Dictionary
+Dim r As Range: Set r = Nothing
+While True
+    If r Is Nothing Then
+        Set r = wsMain.UsedRange.Find("INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP")
+    Else
+        Set r = wsMain.UsedRange.Find("INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP", After:=r)
+    End If
+    If r Is Nothing Then GoTo exit_while
+    If tmp.Exists(r.AddressLocal) Then
+        GoTo exit_while
+    End If
+    Call tmp.Add(r.AddressLocal, r)
+    Dim rv As Range: Set rv = wsMain.Cells(r.row, r.Column + 1)
+    Dim vv As Variant: vv = rv
+    If VarType(vv) = vbString Then
+        If Trim(vv) <> "" Then
+            Dim a: a = Split(vv, ";")
+            Dim key As String, val As String
+            If UBound(a) - LBound(a) <> 1 Then
+                rv.Parent.Parent.Activate
+                rv.Parent.Activate
+                rv.Select
+                Call ErrorExit("INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP value is not a semicolon delimited pair of strings:'" + vv + "'")
+            End If
+            key = a(0)
+            val = a(1)
+            If Not td.MappableTransactionColumnSet.Exists(val) Then
+                rv.Parent.Parent.Activate
+                rv.Parent.Activate
+                rv.Select
+                Dim aa: aa = c2a(td.MappableTransactionColumnSet)
+                Call ErrorExit("Unexpected TRANSACTION_COLUMN:'" + val + "' Expecting one of:'" + Join(aa, "', '") + "'")
+            End If
+            If INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP.Exists(key) Then
+                If INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP(key) <> val Then
+                    rv.Parent.Parent.Activate
+                    rv.Parent.Activate
+                    rv.Select
+                    Call ErrorExit("INVOICE_COLUMN string already mapped to TRANSACTION_COLUMN:'" + key + "' '" + INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP(key) + "'")
+                End If
+            End If
+            Call INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP.Add(key, val)
+        End If
+    End If
+    '
+Wend
+exit_while:
 
 End Sub

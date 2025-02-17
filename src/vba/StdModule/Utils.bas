@@ -225,7 +225,7 @@ GoTo 90
 On Error GoTo 0
 Application.ScreenUpdating = bScreenUpdating
 If delete_worksheet Then Call DeleteWorksheetSilent(ws)
-Call ErrorExit("asxax")
+Call ErrorExit("Failure exporting PDF:'" + Err.Description + "'")
 90:
 If delete_worksheet Then Call DeleteWorksheetSilent(ws)
 Application.ScreenUpdating = bScreenUpdating
@@ -253,17 +253,17 @@ Exit Function
 exit_with_failure:
 End Function
 
-Function SafeFindKeyValueInUsedRange(ws As Worksheet, key As String, Optional default_value)
-Dim rr As Range: Set rr = ws.UsedRange.Find(key)
+Function SafeFindKeyValueInRange(r As Range, key As String, Optional default_value)
+Dim rr As Range: Set rr = r.Find(key)
 If Not rr Is Nothing Then
-    SafeFindKeyValueInUsedRange = ws.Cells(rr.row, rr.Column + 1)
+    SafeFindKeyValueInRange = r.Parent.Cells(rr.row, rr.Column + 1)
 Else
     If IsMissing(default_value) Then
-        ws.Parent.Activate
-        ws.Activate
+        r.Parent.Parent.Activate
+        r.Parent.Activate
         Call ErrorExit("Missing key-value cell for key:'" + key + "'")
     End If
-    SafeFindKeyValueInUsedRange = default_value
+    SafeFindKeyValueInRange = default_value
 End If
 End Function
 
@@ -275,3 +275,13 @@ If Not r Is Nothing Then r.Select
 10:
 Call ErrorExit(msg)
 End Sub
+
+Function c2a(c)
+ReDim a(c.count - 1)
+Dim kk, k As Long: k = 0
+For Each kk In c
+    a(k) = kk
+    k = k + 1
+Next kk
+c2a = a
+End Function

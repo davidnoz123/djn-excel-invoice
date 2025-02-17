@@ -1161,7 +1161,7 @@ Private Sub Class_Initialize()
     bPValueSelectable = True
     
     bPMACFix = False
-    If Val(Application.Version) >= 16 Then '"16.0"
+    If val(Application.Version) >= 16 Then '"16.0"
         bPMACFix = True 'Office 2016 compatibility :(
     End If
     

@@ -12,12 +12,12 @@ Option Explicit
 Dim fso As New FileSystemObject
 Public email As Outlook.MailItem
 
-Sub Inite(invoice_pdf As String, master As cMainData, master_record As cMainRecord, invoice_number As Long, date_ As Date, display_email As Boolean, subject_line_prefix_s As String)
-Dim t As TextStream: Set t = fso.OpenTextFile(master_record.EmailTemplatex)
+Sub Inite(invoice_pdf As String, main_ As cMainData, main_record As cMainRecord, invoice_number As Long, date_ As Date, display_email As Boolean, subject_line_prefix_s As String)
+Dim t As TextStream: Set t = fso.OpenTextFile(main_record.EmailTemplatex)
 Dim email_template_s As String: email_template_s = t.ReadAll
 
-email_template_s = Replace(email_template_s, "{RecipientName}", master_record.RecipientNameEmail)
-email_template_s = Replace(email_template_s, "{YourBusinessName}", master.YOUR_BUSINESS_NAME)
+email_template_s = Replace(email_template_s, "{RecipientName}", main_record.RecipientNameEmail)
+email_template_s = Replace(email_template_s, "{YourBusinessName}", main_.YOUR_BUSINESS_NAME)
 
 Dim OutlookApp As Outlook.Application: Set OutlookApp = SafeGetOutlookApp()
 Set email = OutlookApp.CreateItem(olMailItem)
@@ -33,7 +33,7 @@ With email
   End If
   .BodyFormat = olFormatHTML
   .HTMLBody = email_template_s + .HTMLBody
-  .To = master_record.EmailAddressx
+  .To = main_record.EmailAddressx
   '.CC = "sdf@gamil.com"
   '.BCC = "hello@gamil.com;hi@gmail.com"
   .Subject = subject_line_prefix_s + ":" + format(invoice_number, "0000000")

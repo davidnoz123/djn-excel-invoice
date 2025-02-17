@@ -34,13 +34,13 @@ End If
 Call ErrorExit(msg)
 End Sub
 
-Sub Inity(master As cMainData, td As cTransactionData, rowIndex_)
+Sub Inity(main_ As cMainData, td As cTransactionData, rowIndex_)
 Set Parent = td
 rowIndex = rowIndex_
 Dim rec: rec = td.GetRecord(rowIndex)
 Me.CustomerID = Trim(rec(LBound(rec), td.col_CustomerID))
 If Me.CustomerID <> "" Then
-  Dim mr As cMainRecord: Set mr = master.RecordsByCustomerID(Me.CustomerID)
+  Dim mr As cMainRecord: Set mr = main_.RecordsByCustomerID(Me.CustomerID)
   If mr Is Nothing Then
     Call x_error_exit(rowIndex, td.col_CustomerID, "Unknown CustomerID '" + CStr(Me.CustomerID) + "'", True)
   End If

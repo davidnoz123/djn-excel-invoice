@@ -15,8 +15,8 @@ Function GetTransactionRecords(xx)
 Dim cws As Worksheet: Set cws = Safe_ThisWorkbook_Worksheets("Customers")
 Dim tws As Worksheet: Set tws = Safe_ThisWorkbook_Worksheets("Transactions")
 
-Dim master As New cMainData
-Call master.Init(cws.Cells(1, 1))
+Dim main_ As New cMainData
+Call main_.Init(cws.Cells(1, 1))
 Dim td As New cTransactionData
 Call td.Initx(tws)
 
@@ -30,7 +30,7 @@ For Each r In Selection.Rows
       Exit For
     End If
     Dim t As cTransactionRecord: Set t = New cTransactionRecord
-    Call t.Inity(master, td, r.row)
+    Call t.Inity(main_, td, r.row)
     If t.CustomerID <> "" Then
       ret.Add t
     End If
@@ -41,7 +41,7 @@ End Function
 
 Sub aProcessRun_Callback(transaction_records As Collection)
 ' Process the transaction records in transaction_records
-Dim master As New cMainData
+Dim main_ As New cMainData
 
 Dim tws As Worksheet: Set tws = Safe_ThisWorkbook_Worksheets("Transactions")
 
@@ -61,7 +61,7 @@ Dim count As Long, invoice_count As Long
 invoice_count = 0
 For Each t In transaction_records
   MainForm.Do_Events "Loading Invoice Template " + t.MainRecord.InvoiceTemplatex + " ..."
-  Call itc.GetInvoiceTemplate(t.MainRecord.InvoiceTemplatex)
+  Call itc.GetInvoiceTemplate(main_, t.MainRecord.InvoiceTemplatex)
   Dim date2Trans  As Scripting.Dictionary
   If custId2Trans.Exists(t.CustomerID) Then
     Set date2Trans = custId2Trans(t.CustomerID)
@@ -101,7 +101,7 @@ For Each CustomerID In custId2Trans.Keys()
     MainForm.Do_Events "Getting Invoice Template ..."
     Set transColl = date2Trans(date_)
     Dim mr As cMainRecord: Set mr = transColl(1).MainRecord
-    Dim invoice_number As Long: invoice_number = master.NextInvoiceNumber
+    Dim invoice_number As Long: invoice_number = main_.NextInvoiceNumber
         
     MainForm.log_prefix = prefix + "Creating Invoice: "
     MainForm.Do_Events ""
@@ -112,8 +112,8 @@ For Each CustomerID In custId2Trans.Keys()
     Dim invoice_base_name As String: invoice_base_name = temp_folder + "\" + now_str + "." + mr.CustomerID + "." + format(CDate(date_), "yyyy-mm-dd") + "." + format(invoice_number, "0000000")
     Dim invoice_pdf As String: invoice_pdf = invoice_base_name + ".pdf"
     
-    Dim it As cInvoiceTemplateXl: Set it = itc.GetInvoiceTemplate(mr.InvoiceTemplatex)
-    Dim ws As Worksheet: Set ws = it.CreateInvoiceDocument(transColl, invoice_number, CDate(date_))
+    Dim it As cInvoiceTemplateXl: Set it = itc.GetInvoiceTemplate(main_, mr.InvoiceTemplatex)
+    Dim ws As Worksheet: Set ws = it.CreateInvoiceWorksheet(main_, transColl, invoice_number, CDate(date_))
     Call ExportWorksheetPDFSilent(ws, invoice_pdf, True, MainForm.EmailOptionNone)
     'Call doc.SaveAs2(invoice_base_name + ".docx")
     'Call doc.SaveAs2(invoice_pdf, Word.wdExportFormatPDF)
@@ -129,7 +129,7 @@ For Each CustomerID In custId2Trans.Keys()
         MainForm.Do_Events "Creating Email ..."
         Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
         Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
-        Call ie.Inite(invoice_pdf, master, mr, invoice_number, CDate(date_), display_email, master.SUBJECT_LINE_PREFIX)
+        Call ie.Inite(invoice_pdf, main_, mr, invoice_number, CDate(date_), display_email, main_.SUBJECT_LINE_PREFIX)
       End If
       
       If MainForm.EmailOptionSend Then
@@ -159,12 +159,13 @@ MainForm.ResetState transaction_records
 MainForm.Show
 End Sub
 
-
 Sub aaMain()
+Application.DisplayAlerts = True
+Application.ScreenUpdating = True
 If True Then
     Dim transaction_records As Collection: Set transaction_records = GetTransactionRecords(Empty)
     MainForm.ResetState transaction_records
-    MainForm.EmailOptionNone = False
+    MainForm.EmailOptionNone = True
     MainForm.EmailOptionCreateOnly = False
     MainForm.EmailOptionSend = False
     Call aProcessRun_Callback(transaction_records)
