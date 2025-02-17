@@ -47,7 +47,7 @@ Dim iCol_Beg As Long: iCol_Beg = rTopLeft.Column
 Dim rr As Range
 If bGetRowOtherwiseColumn Then
   Set rr = ws.Columns(iCol_Beg).Find(What:=What, After:=ws.Cells(iRow_Beg, iCol_Beg), LookIn:=xlValues, LookAt _
-          :=xlPart, searchorder:=xlByRows, SearchDirection:=xlNext, MatchCase:= _
+          :=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:= _
           False, SearchFormat:=False)
   If rr Is Nothing Then
     FindNextWiseCell = 0
@@ -56,7 +56,7 @@ If bGetRowOtherwiseColumn Then
   End If
 Else
   Set rr = ws.Rows(iRow_Beg).Find(What:=What, After:=ws.Cells(iRow_Beg, iCol_Beg), LookIn:=xlValues, LookAt _
-          :=xlPart, searchorder:=xlByRows, SearchDirection:=xlNext, MatchCase:= _
+          :=xlPart, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:= _
           False, SearchFormat:=False)
   If rr Is Nothing Then
     FindNextWiseCell = 0
@@ -213,6 +213,29 @@ While ws.Shapes.count > 0
   Set s = ws.Shapes(1)
   s.Delete
 Wend
+End Sub
+
+Sub ExportWorksheetPDFSilent(ws As Worksheet, pdf_name As String, delete_worksheet As Boolean, open_after_publish As Boolean)
+Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
+On Error GoTo 80
+Application.ScreenUpdating = False
+ws.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdf_name, Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:=open_after_publish
+GoTo 90
+80:
+On Error GoTo 0
+Application.ScreenUpdating = bScreenUpdating
+If delete_worksheet Then Call DeleteWorksheetSilent(ws)
+Call ErrorExit("asxax")
+90:
+If delete_worksheet Then Call DeleteWorksheetSilent(ws)
+Application.ScreenUpdating = bScreenUpdating
+End Sub
+
+Sub DeleteWorksheetSilent(ws)
+Dim bDisplayAlerts As Boolean: bDisplayAlerts = Application.DisplayAlerts
+Application.DisplayAlerts = False
+ws.Delete
+Application.DisplayAlerts = bDisplayAlerts
 End Sub
 
 Function GetRangeFromString(rangeStr As String) As Range

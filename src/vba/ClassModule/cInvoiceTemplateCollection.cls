@@ -13,14 +13,13 @@ Option Explicit
 Dim fso As New FileSystemObject
 Dim fb2it As New Scripting.Dictionary
 
-Function GetInvoiceTemplate(file_base) As cInvoiceTemplate
-file_base = LCase(fso.GetFileName(file_base))
-If fb2it.Exists(file_base) Then
-  Set GetInvoiceTemplate = fb2it(file_base)
+Function GetInvoiceTemplate(template_name As String) As cInvoiceTemplateXl
+If fb2it.Exists(template_name) Then
+  Set GetInvoiceTemplate = fb2it(template_name)
 Else
-  Dim it As New cInvoiceTemplate
-  Call it.Init(ThisWorkbook_Path + "\" + file_base)
-  Call fb2it.Add(file_base, it)
+  Dim it As New cInvoiceTemplateXl
+  Call it.Init(template_name)
+  Call fb2it.Add(template_name, it)
   Set GetInvoiceTemplate = it
 End If
 End Function

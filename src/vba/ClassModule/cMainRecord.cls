@@ -65,17 +65,21 @@ EmailTemplatex = EmailTemplate_v
 End Property
 
 Property Get InvoiceTemplatex() As String
-If IsEmpty(InvoiceTemplate_v) Then
-  If Parent.fso.FileExists(InvoiceTemplate_s) Then
-    InvoiceTemplate_v = Parent.fso.GetAbsolutePathName(InvoiceTemplate_s)
-  Else
-    InvoiceTemplate_v = Parent.fso.GetAbsolutePathName(ThisWorkbook_Path + "\" + InvoiceTemplate_s)
-  End If
-  If Not Parent.fso.FileExists(InvoiceTemplate_v) Then
-    Call x_error_exit(rowIndex, Parent.col_InvoiceTemplate, "Missing " + IIf(InvoiceTemplate_is_default, "default ", "") + "InvoiceTemplate file '" + InvoiceTemplate_v + "'")
-  End If
+If True Then
+    InvoiceTemplatex = InvoiceTemplate_s
+Else
+    If IsEmpty(InvoiceTemplate_v) Then
+      If Parent.fso.FileExists(InvoiceTemplate_s) Then
+        InvoiceTemplate_v = Parent.fso.GetAbsolutePathName(InvoiceTemplate_s)
+      Else
+        InvoiceTemplate_v = Parent.fso.GetAbsolutePathName(ThisWorkbook_Path + "\" + InvoiceTemplate_s)
+      End If
+      If Not Parent.fso.FileExists(InvoiceTemplate_v) Then
+        Call x_error_exit(rowIndex, Parent.col_InvoiceTemplate, "Missing " + IIf(InvoiceTemplate_is_default, "default ", "") + "InvoiceTemplate file '" + InvoiceTemplate_v + "'")
+      End If
+    End If
+    InvoiceTemplatex = InvoiceTemplate_v
 End If
-InvoiceTemplatex = InvoiceTemplate_v
 End Property
 
 Private Sub x_error_exit(row As Long, col As Long, msg As String)

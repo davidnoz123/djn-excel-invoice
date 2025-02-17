@@ -102,27 +102,28 @@ For Each CustomerID In custId2Trans.Keys()
     Set transColl = date2Trans(date_)
     Dim mr As cMainRecord: Set mr = transColl(1).MainRecord
     Dim invoice_number As Long: invoice_number = master.NextInvoiceNumber
-    Dim it As cInvoiceTemplate: Set it = itc.GetInvoiceTemplate(mr.InvoiceTemplatex)
         
     MainForm.log_prefix = prefix + "Creating Invoice: "
     MainForm.Do_Events ""
-    Dim doc As Word.Document: Set doc = it.CreateInvoiceDocument(transColl, invoice_number, CDate(date_))
+        
     MainForm.log_prefix = prefix
-    
-    Dim now_str As String: now_str = format(Now(), "yyyy-mm-dd-HH-MM-ss")
-    
     MainForm.Do_Events "Saving Invoice ..."
+    Dim now_str As String: now_str = format(Now(), "yyyy-mm-dd-HH-MM-ss")
     Dim invoice_base_name As String: invoice_base_name = temp_folder + "\" + now_str + "." + mr.CustomerID + "." + format(CDate(date_), "yyyy-mm-dd") + "." + format(invoice_number, "0000000")
     Dim invoice_pdf As String: invoice_pdf = invoice_base_name + ".pdf"
-    Call doc.SaveAs2(invoice_base_name + ".docx")
-    Call doc.SaveAs2(invoice_pdf, Word.wdExportFormatPDF)
+    
+    Dim it As cInvoiceTemplateXl: Set it = itc.GetInvoiceTemplate(mr.InvoiceTemplatex)
+    Dim ws As Worksheet: Set ws = it.CreateInvoiceDocument(transColl, invoice_number, CDate(date_))
+    Call ExportWorksheetPDFSilent(ws, invoice_pdf, True, MainForm.EmailOptionNone)
+    'Call doc.SaveAs2(invoice_base_name + ".docx")
+    'Call doc.SaveAs2(invoice_pdf, Word.wdExportFormatPDF)
         
     If mr.EmailAddressx = "" Then
       'If False Then
       '  Call doc.Close(False)
       'End If
     ElseIf Not MainForm.EmailOptionNone Then
-      Call doc.Close(False)
+      'Call doc.Close(False)
       
       If MainForm.EmailOptionCreateOnly Or MainForm.EmailOptionSend Then
         MainForm.Do_Events "Creating Email ..."
@@ -158,4 +159,15 @@ MainForm.ResetState transaction_records
 MainForm.Show
 End Sub
 
+
+Sub aaMain()
+If True Then
+    Dim transaction_records As Collection: Set transaction_records = GetTransactionRecords(Empty)
+    MainForm.ResetState transaction_records
+    MainForm.EmailOptionNone = False
+    MainForm.EmailOptionCreateOnly = False
+    MainForm.EmailOptionSend = False
+    Call aProcessRun_Callback(transaction_records)
+End If
+End Sub
 

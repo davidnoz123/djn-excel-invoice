@@ -69,7 +69,7 @@ End Sub
 
 Private Function FindTipDocRow(sKey As String) As Long
 Dim rr As Range
-Set rr = wsDocs.Columns(1).Find(What:=sKey, After:=wsDocs.Cells(1, 1), LookIn:=xlValues, LookAt:=xlWhole, searchorder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
+Set rr = wsDocs.Columns(1).Find(What:=sKey, After:=wsDocs.Cells(1, 1), LookIn:=xlValues, LookAt:=xlWhole, SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False, SearchFormat:=False)
 Dim iRow As Long
 If Not rr Is Nothing Then
   iRow = rr.row
