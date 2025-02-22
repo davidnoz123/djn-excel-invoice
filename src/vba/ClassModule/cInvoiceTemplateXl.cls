@@ -94,13 +94,6 @@ For Each field_name In main_record.FieldName2Value.Keys()
     search_and_replace.Add "{" + field_name + "}", StringifyInvoiceContactDetail(CStr(field_value))
 Next field_name
 
-'search_and_replace.Add "{Invoiced Contact Name}", StringifyInvoiceContactDetail(main_record.RecipientNameInvoice)
-'search_and_replace.Add "{Invoiced Company Name}", StringifyInvoiceContactDetail(main_record.CompanyName)
-'search_and_replace.Add "{Invoiced Street Address}", StringifyInvoiceContactDetail(main_record.StreetAddress)
-'search_and_replace.Add "{Invoiced Town, City Post Code}", StringifyInvoiceContactDetail(main_record.TownCityPostCode)
-'search_and_replace.Add "{Invoiced Country}", StringifyInvoiceContactDetail(main_record.Country)
-'search_and_replace.Add "{Invoiced Phone}", StringifyInvoiceContactDetail(main_record.Phone)
-
 Call SearchAndReplace(ws, search_and_replace)
 End Sub
 
@@ -199,13 +192,12 @@ Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
 On Error GoTo 10
 Application.ScreenUpdating = False
 
-' Create a copy of the template worksheet
-Dim ws_cur As Worksheet: Set ws_cur = ActiveSheet
-ws_tmp.Copy After:=ws_tmp
+Dim ws_cur As Worksheet: Set ws_cur = ActiveSheet ' Get the current active sheet
 
-'ws_cur.Parent.Parent.Activate
-'ws_cur.Parent.Activate
-ws_cur.Activate
+' Create a copy of the template worksheet
+ws_tmp.Copy After:=ws_tmp ' Copy ws_tmp and put it after ws_tmp
+
+ws_cur.Activate ' The call to ws_tmp.Copy has changed the active sheet ... restore the active sheet
 
 Dim ws_out As Worksheet: Set ws_out = ws_tmp.Parent.Sheets(ws_tmp.index + 1)
 
@@ -225,15 +217,7 @@ For Each tr In transColl
     Dim tc
     For Each tc In TransactionColumn2InvoiceHeaderColumn
         col = TransactionColumn2InvoiceHeaderColumn(tc)
-        
-        'Dim val: val = CallByName(tr, tc, VbGet)
         Dim val: val = tr.FieldName2Value(tc)
-        
-        ' Adjust the UnitPrice with the tax rate so the Transactions sum (which is what shops would charge) is the same as the invoice "TOTAL" field.
-        'If tc = "UnitPrice" Then
-        '    val = val / (1 - main_.TAX_RATE)
-        'End If
-        
         ws_out.Cells(row, col) = val
     Next tc
     row = row + 1

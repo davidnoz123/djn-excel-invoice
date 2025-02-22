@@ -16,7 +16,6 @@ Sub Inite(invoice_pdf As String, main_ As cCustomerData, main_record As cCustome
 Dim t As TextStream: Set t = fso.OpenTextFile(main_record.EmailTemplatex)
 Dim email_template_s As String: email_template_s = t.ReadAll
 
-'email_template_s = Replace(email_template_s, "{RecipientName}", main_record.RecipientNameEmail)
 email_template_s = Replace(email_template_s, "{YourBusinessName}", main_.YOUR_BUSINESS_NAME)
 
 Dim field_name

@@ -21,23 +21,20 @@ exit_with_failure:
 Call ErrorExit("Missing required worksheet:'" + name + "'")
 End Function
 
-Function FindCol(a, name, ByVal start_pos As Long) As Long
-If start_pos > UBound(a) Then
-  start_pos = LBound(a)
-End If
-If a(LBound(a), start_pos) = name Then
-  FindCol = start_pos
-Else
-  Dim i As Long
-  For i = LBound(a, 2) To UBound(a, 2)
-    If a(LBound(a), i) = name Then
-      FindCol = i
-      GoTo 10
-    End If
-  Next i
-  Call ErrorExit("MissingColumnHeader:" + name)
+Function FindCol(a, name) As Long
+Dim i As Long
+For i = LBound(a, 2) To UBound(a, 2)
+  If a(LBound(a), i) = name Then
+    FindCol = i
+    GoTo 10
+  End If
+Next i
+ReDim b(LBound(a, 2) To UBound(a, 2)) As String
+For i = LBound(a, 2) To UBound(a, 2)
+   b(i) = CStr(a(LBound(a), i))
+Next i
+Call ErrorExit("MissingExpectedColumnHeader:'" + name + "'" + vbCrLf + "AvailableHeaders:['" + Join(b, "','") + "']")
 10:
-End If
 End Function
 
 Function FindNextWiseCell(rTopLeft As Range, ByVal bGetRowOtherwiseColumn As Boolean, Optional ByVal What As String = "") As Long

@@ -14,10 +14,6 @@ Public CustomerRecord As cCustomerRecord
 
 Public CustomerID As String
 Public InvoiceDate As Date
-'Public DeliveryDate As Date
-'Public Description As String
-'Public Quantity As Double
-'Public UnitPrice As Double
 Public ProcessedWhen As String
 Public InvoiceNo As Long
 
@@ -51,16 +47,8 @@ If Me.CustomerID <> "" Then
   If IsEmpty(vInvoiceDate) Or Not IsDate(vInvoiceDate) Then
     Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid InvoiceDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
-  'Dim vDeliveryDate As Variant: vDeliveryDate = rec(LBound(rec), td.col_DeliveryDate)
-  'If IsEmpty(vDeliveryDate) Or Not IsDate(vDeliveryDate) Then
-  '  Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid DeliveryDate in transaction record. Provide dates in the form similar to '2021-07-21'")
-  'End If
   
   Me.InvoiceDate = CDate(vInvoiceDate)
-  'Me.DeliveryDate = CDate(vDeliveryDate)
-  'Me.Description = rec(LBound(rec), td.col_DESCRIPTION)
-  'Me.Quantity = rec(LBound(rec), td.col_QUANTITY)
-  'Me.UnitPrice = rec(LBound(rec), td.col_UnitPrice)
   Me.ProcessedWhen = rec(LBound(rec), td.col_ProcessedWhen)
   Me.InvoiceNo = rec(LBound(rec), td.col_InvoiceNo)
   

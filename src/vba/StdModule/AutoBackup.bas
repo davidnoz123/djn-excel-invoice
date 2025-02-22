@@ -69,7 +69,6 @@ Terminate "xTerminate"
 End Sub
 
 Sub xRunAutoBackup()
-'Exit Sub
 Call Terminate("xRunAutoBackup")
 Dim backup_dir As String:  backup_dir = ThisWorkbook_Path + BACKUP_SUBDIR
 Err.Clear
