@@ -39,7 +39,7 @@ Else
 End If
 End Function
 
-Sub Init(main_ As cMainData, template_name As String)
+Sub Init(main_ As cCustomerData, template_name As String)
 Dim wb As Workbook: Set wb = SafeGetTemplateWorkbook
 If Not WsExists(wb, template_name) Then
     Call ErrorExit("Missing worksheet in Invoice Templates Excel Workbook:'" + template_name + "'")
@@ -79,12 +79,12 @@ End If
 StringifyInvoiceContactDetail = ret
 End Function
 
-Private Sub ReplaceTokens(ws As Worksheet, main_record As cMainRecord, invoice_number As Long, date_ As Date)
+Private Sub ReplaceTokens(ws As Worksheet, main_record As cCustomerRecord, invoice_number As Long, date_ As Date)
 ' Substitute the variable strings in the document
 Dim search_and_replace As New Scripting.Dictionary
 search_and_replace.CompareMode = TextCompare
-search_and_replace.Add "{INVOICE NUMBER}", format(invoice_number, "0000000")
-search_and_replace.Add "{INVOICE DATE}", format(date_, "")
+search_and_replace.Add "{InvoiceNo}", format(invoice_number, "0000000")
+search_and_replace.Add "{InvoiceDate}", format(date_, "")
 
 search_and_replace.Add "{InvoicedEmail}", StringifyInvoiceContactDetail(main_record.EmailAddressx, "Email: ")
 
@@ -194,7 +194,7 @@ End If
 
 End Function
 
-Function CreateInvoiceWorksheet(main_ As cMainData, transColl As Collection, invoice_number As Long, date_ As Date) As Worksheet
+Function CreateInvoiceWorksheet(main_ As cCustomerData, transColl As Collection, invoice_number As Long, date_ As Date) As Worksheet
 Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
 On Error GoTo 10
 Application.ScreenUpdating = False
@@ -209,8 +209,8 @@ ws_cur.Activate
 
 Dim ws_out As Worksheet: Set ws_out = ws_tmp.Parent.Sheets(ws_tmp.index + 1)
 
-' Replace the token strings with the MainRecord values
-Dim main_record As cMainRecord: Set main_record = transColl(1).MainRecord
+' Replace the token strings with the CustomerRecord values
+Dim main_record As cCustomerRecord: Set main_record = transColl(1).CustomerRecord
 Call ReplaceTokens(ws_out, main_record, invoice_number, date_)
 
 ' Reshape the ListObject (i.e., the Excel table) and the Invoice cells
@@ -225,7 +225,9 @@ For Each tr In transColl
     Dim tc
     For Each tc In TransactionColumn2InvoiceHeaderColumn
         col = TransactionColumn2InvoiceHeaderColumn(tc)
-        Dim val: val = CallByName(tr, tc, VbGet)
+        
+        'Dim val: val = CallByName(tr, tc, VbGet)
+        Dim val: val = tr.FieldName2Value(tc)
         
         ' Adjust the UnitPrice with the tax rate so the Transactions sum (which is what shops would charge) is the same as the invoice "TOTAL" field.
         'If tc = "UnitPrice" Then

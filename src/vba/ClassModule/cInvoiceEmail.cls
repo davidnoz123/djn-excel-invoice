@@ -12,7 +12,7 @@ Option Explicit
 Dim fso As New FileSystemObject
 Public email As Outlook.MailItem
 
-Sub Inite(invoice_pdf As String, main_ As cMainData, main_record As cMainRecord, invoice_number As Long, date_ As Date, display_email As Boolean, subject_line_prefix_s As String)
+Sub Inite(invoice_pdf As String, main_ As cCustomerData, main_record As cCustomerRecord, invoice_number As Long, date_ As Date, display_email As Boolean, subject_line_prefix_s As String)
 Dim t As TextStream: Set t = fso.OpenTextFile(main_record.EmailTemplatex)
 Dim email_template_s As String: email_template_s = t.ReadAll
 

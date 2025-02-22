@@ -13,7 +13,7 @@ Option Explicit
 Dim fso As New FileSystemObject
 Dim fb2it As New Scripting.Dictionary
 
-Function GetInvoiceTemplate(main_ As cMainData, template_name As String) As cInvoiceTemplateXl
+Function GetInvoiceTemplate(main_ As cCustomerData, template_name As String) As cInvoiceTemplateXl
 If fb2it.Exists(template_name) Then
   Set GetInvoiceTemplate = fb2it(template_name)
 Else

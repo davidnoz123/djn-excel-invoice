@@ -10,16 +10,18 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Public rowIndex As Long
-Public MainRecord As cMainRecord
+Public CustomerRecord As cCustomerRecord
 
 Public CustomerID As String
 Public InvoiceDate As Date
-Public DeliveryDate As Date
-Public Description As String
-Public Quantity As Double
-Public UnitPrice As Double
+'Public DeliveryDate As Date
+'Public Description As String
+'Public Quantity As Double
+'Public UnitPrice As Double
 Public ProcessedWhen As String
 Public InvoiceNo As Long
+
+Public FieldName2Value As New Scripting.Dictionary
 
 Public Parent As cTransactionData
 
@@ -34,33 +36,40 @@ End If
 Call ErrorExit(msg)
 End Sub
 
-Sub Inity(main_ As cMainData, td As cTransactionData, rowIndex_)
+Sub Inity(main_ As cCustomerData, td As cTransactionData, rowIndex_)
 Set Parent = td
 rowIndex = rowIndex_
 Dim rec: rec = td.GetRecord(rowIndex)
 Me.CustomerID = Trim(rec(LBound(rec), td.col_CustomerID))
 If Me.CustomerID <> "" Then
-  Dim mr As cMainRecord: Set mr = main_.RecordsByCustomerID(Me.CustomerID)
+  Dim mr As cCustomerRecord: Set mr = main_.RecordsByCustomerID(Me.CustomerID)
   If mr Is Nothing Then
     Call x_error_exit(rowIndex, td.col_CustomerID, "Unknown CustomerID '" + CStr(Me.CustomerID) + "'", True)
   End If
-  Set Me.MainRecord = mr
+  Set Me.CustomerRecord = mr
   Dim vInvoiceDate As Variant: vInvoiceDate = rec(LBound(rec), td.col_InvoiceDate)
   If IsEmpty(vInvoiceDate) Or Not IsDate(vInvoiceDate) Then
     Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid InvoiceDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
-  Dim vDeliveryDate As Variant: vDeliveryDate = rec(LBound(rec), td.col_DeliveryDate)
-  If IsEmpty(vDeliveryDate) Or Not IsDate(vDeliveryDate) Then
-    Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid DeliveryDate in transaction record. Provide dates in the form similar to '2021-07-21'")
-  End If
+  'Dim vDeliveryDate As Variant: vDeliveryDate = rec(LBound(rec), td.col_DeliveryDate)
+  'If IsEmpty(vDeliveryDate) Or Not IsDate(vDeliveryDate) Then
+  '  Call x_error_exit(rowIndex, td.col_DeliveryDate, "Missing or invalid DeliveryDate in transaction record. Provide dates in the form similar to '2021-07-21'")
+  'End If
   
   Me.InvoiceDate = CDate(vInvoiceDate)
-  Me.DeliveryDate = CDate(vDeliveryDate)
-  Me.Description = rec(LBound(rec), td.col_DESCRIPTION)
-  Me.Quantity = rec(LBound(rec), td.col_QUANTITY)
-  Me.UnitPrice = rec(LBound(rec), td.col_UnitPrice)
+  'Me.DeliveryDate = CDate(vDeliveryDate)
+  'Me.Description = rec(LBound(rec), td.col_DESCRIPTION)
+  'Me.Quantity = rec(LBound(rec), td.col_QUANTITY)
+  'Me.UnitPrice = rec(LBound(rec), td.col_UnitPrice)
   Me.ProcessedWhen = rec(LBound(rec), td.col_ProcessedWhen)
   Me.InvoiceNo = rec(LBound(rec), td.col_InvoiceNo)
+  
+  Set FieldName2Value = New Scripting.Dictionary
+  Dim field_name
+  For Each field_name In Parent.FieldName2ColIndex.Keys()
+      Dim col As Long: col = Parent.FieldName2ColIndex(field_name)
+      Call FieldName2Value.Add(field_name, rec(LBound(rec), col))
+  Next field_name
   
 End If
 End Sub
