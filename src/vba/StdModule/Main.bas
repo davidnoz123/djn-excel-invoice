@@ -160,6 +160,8 @@ MainForm.Show
 End Sub
 
 Sub aaMain()
+'Dim r As Range: Set r = Range("[Journal_fl.xlsm]Sheet1!A1")
+'End
 Application.DisplayAlerts = True
 Application.ScreenUpdating = True
 If True Then

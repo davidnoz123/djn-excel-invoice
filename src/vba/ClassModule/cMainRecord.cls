@@ -11,13 +11,15 @@ Option Explicit
 
 Public CustomerID As String
 
-Public RecipientNameEmail As String
-Public RecipientNameInvoice As String
-Public CompanyName As String
-Public StreetAddress As String
-Public TownCityPostCode As String
-Public Country As String
-Public Phone As String
+Public FieldName2Value As New Scripting.Dictionary
+
+'Public RecipientNameEmail As String
+'Public RecipientNameInvoice As String
+'Public CompanyName As String
+'Public StreetAddress As String
+'Public TownCityPostCode As String
+'Public Country As String
+'Public Phone As String
 
 Dim EmailAddress_v As Variant
 Dim EmailAddress_s As String
@@ -97,13 +99,22 @@ CustomerID = d(row, Parent.col_CustomerID)
 EmailAddress_s = Trim(d(row, Parent.col_EmailAddress))
 EmailTemplate_s = Trim(d(row, Parent.col_EmailTemplate))
 InvoiceTemplate_s = Trim(d(row, Parent.col_InvoiceTemplate))
-RecipientNameEmail = d(row, Parent.col_RecipientNameEmail)
-RecipientNameInvoice = d(row, Parent.col_RecipientNameInvoice)
-CompanyName = d(row, Parent.col_CompanyName)
-StreetAddress = d(row, Parent.col_StreetAddress)
-TownCityPostCode = d(row, Parent.col_TownCityPostCode)
-Country = d(row, Parent.col_Country)
-Phone = d(row, Parent.col_Phone)
+
+
+Set FieldName2Value = New Scripting.Dictionary
+Dim field_name
+For Each field_name In Parent_.FieldName2ColIndex.Keys()
+    Dim col As Long: col = Parent_.FieldName2ColIndex(field_name)
+    Call FieldName2Value.Add(field_name, d(row, col))
+Next field_name
+
+'RecipientNameEmail = d(row, Parent.col_RecipientNameEmail)
+'RecipientNameInvoice = d(row, Parent.col_RecipientNameInvoice)
+'CompanyName = d(row, Parent.col_CompanyName)
+'StreetAddress = d(row, Parent.col_StreetAddress)
+'TownCityPostCode = d(row, Parent.col_TownCityPostCode)
+'Country = d(row, Parent.col_Country)
+'Phone = d(row, Parent.col_Phone)
 
 EmailAddress_v = Empty
 

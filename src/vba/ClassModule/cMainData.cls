@@ -28,16 +28,19 @@ Public col_CustomerID As Long
 Public col_EmailAddress As Long
 Public col_EmailTemplate As Long
 Public col_InvoiceTemplate As Long
-Public col_RecipientNameEmail As Long
-Public col_RecipientNameInvoice As Long
-Public col_CompanyName As Long
-Public col_StreetAddress As Long
-Public col_TownCityPostCode As Long
-Public col_Country As Long
-Public col_Phone As Long
+
+Public FieldName2ColIndex As New Scripting.Dictionary
+
+'Public col_RecipientNameEmail As Long
+'Public col_RecipientNameInvoice As Long
+'Public col_CompanyName As Long
+'Public col_StreetAddress As Long
+'Public col_TownCityPostCode As Long
+'Public col_Country As Long
+'Public col_Phone As Long
 
 
-Public TAX_RATE As Double
+'Public TAX_RATE As Double
 Public SUBJECT_LINE_PREFIX As String
 Public YOUR_BUSINESS_NAME As String
 
@@ -105,15 +108,23 @@ col_CustomerID = FindCol(d, "CustomerID", 1)
 col_EmailAddress = FindCol(d, "EmailAddress", 2)
 col_EmailTemplate = FindCol(d, "EmailTemplate", 3)
 col_InvoiceTemplate = FindCol(d, "InvoiceTemplate", 4)
-col_RecipientNameEmail = FindCol(d, "RecipientNameEmail", 5)
-col_RecipientNameInvoice = FindCol(d, "RecipientNameInvoice", 5)
-col_CompanyName = FindCol(d, "CompanyName", 6)
-col_StreetAddress = FindCol(d, "StreetAddress", 7)
-col_TownCityPostCode = FindCol(d, "TownCityPostCode", 8)
-col_Country = FindCol(d, "Country", 9)
-col_Phone = FindCol(d, "Phone", 10)
+
+
+Set FieldName2ColIndex = New Scripting.Dictionary
 
 Dim i As Long
+For i = LBound(d, 2) To UBound(d, 2)
+  Call FieldName2ColIndex.Add(d(LBound(d), i), i)
+Next i
+
+'col_RecipientNameEmail = FindCol(d, "RecipientNameEmail", 5)
+'col_RecipientNameInvoice = FindCol(d, "RecipientNameInvoice", 5)
+'col_CompanyName = FindCol(d, "CompanyName", 6)
+'col_StreetAddress = FindCol(d, "StreetAddress", 7)
+'col_TownCityPostCode = FindCol(d, "TownCityPostCode", 8)
+'col_Country = FindCol(d, "Country", 9)
+'col_Phone = FindCol(d, "Phone", 10)
+
 For i = LBound(d) + 1 To UBound(d)
   Dim cid As String: cid = Trim(d(i, col_CustomerID))
   If cid <> "" Then
@@ -143,7 +154,7 @@ End If
 
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 
-TAX_RATE = SafeFindKeyValueInRange(wsMain.UsedRange, "TAX_RATE")
+'TAX_RATE = SafeFindKeyValueInRange(wsMain.UsedRange, "TAX_RATE")
 YOUR_BUSINESS_NAME = SafeFindKeyValueInRange(wsMain.UsedRange, "YOUR_BUSINESS_NAME", "Your Business")
 SUBJECT_LINE_PREFIX = SafeFindKeyValueInRange(wsMain.UsedRange, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
 NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInRange(wsMain.UsedRange, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")

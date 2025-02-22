@@ -85,13 +85,22 @@ Dim search_and_replace As New Scripting.Dictionary
 search_and_replace.CompareMode = TextCompare
 search_and_replace.Add "{INVOICE NUMBER}", format(invoice_number, "0000000")
 search_and_replace.Add "{INVOICE DATE}", format(date_, "")
-search_and_replace.Add "{Invoiced Contact Name}", StringifyInvoiceContactDetail(main_record.RecipientNameInvoice)
-search_and_replace.Add "{Invoiced Company Name}", StringifyInvoiceContactDetail(main_record.CompanyName)
-search_and_replace.Add "{Invoiced Street Address}", StringifyInvoiceContactDetail(main_record.StreetAddress)
-search_and_replace.Add "{Invoiced Town, City Post Code}", StringifyInvoiceContactDetail(main_record.TownCityPostCode)
-search_and_replace.Add "{Invoiced Country}", StringifyInvoiceContactDetail(main_record.Country)
-search_and_replace.Add "{Invoiced Phone}", StringifyInvoiceContactDetail(main_record.Phone, "Phone: ")
-search_and_replace.Add "{Invoiced Email}", StringifyInvoiceContactDetail(main_record.EmailAddressx, "Email: ")
+
+search_and_replace.Add "{InvoicedEmail}", StringifyInvoiceContactDetail(main_record.EmailAddressx, "Email: ")
+
+Dim field_name
+For Each field_name In main_record.FieldName2Value.Keys()
+    Dim field_value: field_value = main_record.FieldName2Value(field_name)
+    search_and_replace.Add "{" + field_name + "}", StringifyInvoiceContactDetail(CStr(field_value))
+Next field_name
+
+'search_and_replace.Add "{Invoiced Contact Name}", StringifyInvoiceContactDetail(main_record.RecipientNameInvoice)
+'search_and_replace.Add "{Invoiced Company Name}", StringifyInvoiceContactDetail(main_record.CompanyName)
+'search_and_replace.Add "{Invoiced Street Address}", StringifyInvoiceContactDetail(main_record.StreetAddress)
+'search_and_replace.Add "{Invoiced Town, City Post Code}", StringifyInvoiceContactDetail(main_record.TownCityPostCode)
+'search_and_replace.Add "{Invoiced Country}", StringifyInvoiceContactDetail(main_record.Country)
+'search_and_replace.Add "{Invoiced Phone}", StringifyInvoiceContactDetail(main_record.Phone)
+
 Call SearchAndReplace(ws, search_and_replace)
 End Sub
 
@@ -124,20 +133,63 @@ Dim rows_actual As Long: rows_actual = lo.DataBodyRange.Rows.count
 If rows_actual <> rows_expect Then
     Dim rr As Range
     If rows_actual > rows_expect Then
+    
+        ' Delete the excess rows in the table
         Set rr = ws_out.Range(ws_out.Cells(row_lot, col_lol), ws_out.Cells(row_lot + rows_actual - rows_expect - 1, col_lor))
         Call rr.Delete(Shift:=xlUp)
         
+        ' Columns to the left and right of the table will now be hanging below the end of the invoice ... delete the rows of this overhang
         Set rr = ws_out.Range(ws_out.Cells(row_bot - (rows_actual - rows_expect - 1), col_lhs), ws_out.Cells(row_bot, col_rhs))
         Call rr.Delete(Shift:=xlUp)
-        
-        For k = row_lob + 1 To row_bot
-            ws_out.Rows(k - (rows_actual - rows_expect)).Select
-            ws_out.Rows(k - (rows_actual - rows_expect)).RowHeight = row_heights(k)
-        Next k
+
     Else
-        'Set rr = ws_out.Range(ws_out.Cells(row, col), ws_out.Cells(row + rows_actual - rows_expect, col_end))
-        ''Call ws_out.Range(ws_out.Cells(row, col), ws_out.Cells(row + rows_actual, col_end)).Insert(Shift:=xlDown)
+    
+        
+        Dim row_lob_tmp As Long
+        
+        ' Add new rows to the table (as fast as we can)
+        row_lob_tmp = row_lob
+        Dim found As Boolean: found = False
+        While Not found
+            If 2 * (row_lob_tmp - row_lot + 1) > rows_expect Then
+                found = True
+                row_lob_tmp = row_lot + rows_expect - (row_lob_tmp - row_lot + 1) - 1
+            End If
+            Set rr = ws_out.Range(ws_out.Cells(row_lot, col_lol), ws_out.Cells(row_lob_tmp, col_lor))
+            Call rr.Insert(Shift:=xlDown)
+            row_lob_tmp = row_lob_tmp + (row_lob_tmp - row_lot) + 1
+        Wend
+        
+        ' Reset the row heights after the table rows are deleted
+        For k = row_lob + 1 To row_lob + rows_expect - 2
+            'ws_out.Rows(k).Select
+            ws_out.Rows(k).RowHeight = row_heights(row_lob)
+        Next k
+        
+        ' Paste the formatting into the new cells now to the left and right up to the end of the invoice
+        Dim src As Range, dst As Range
+        If col_lol > col_lhs Then
+            Set src = ws_out.Range(ws_out.Cells(row_bot, col_lhs), ws_out.Cells(row_bot, col_lol - 1))
+            src.Copy
+            Set dst = ws_out.Range(ws_out.Cells(row_bot + 1, col_lhs), ws_out.Cells(row_bot - (rows_actual - rows_expect), col_lol - 1))
+            Call dst.PasteSpecial(xlPasteFormats)
+        End If
+        
+        If col_rhs > col_lor Then
+            Set src = ws_out.Range(ws_out.Cells(row_bot, col_lor + 1), ws_out.Cells(row_bot, col_rhs))
+            src.Copy
+            Set dst = ws_out.Range(ws_out.Cells(row_bot + 1, col_lor + 1), ws_out.Cells(row_bot - (rows_actual - rows_expect), col_rhs))
+            Call dst.PasteSpecial(xlPasteFormats)
+        End If
+        
     End If
+    
+    ' Reset the row heights after the table rows are deleted
+    For k = row_lob + 1 To row_bot
+        'ws_out.Rows(k - (rows_actual - rows_expect)).Select
+        ws_out.Rows(k - (rows_actual - rows_expect)).RowHeight = row_heights(k)
+    Next k
+    
 End If
 
 End Function
@@ -145,17 +197,23 @@ End Function
 Function CreateInvoiceWorksheet(main_ As cMainData, transColl As Collection, invoice_number As Long, date_ As Date) As Worksheet
 Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
 On Error GoTo 10
-Application.ScreenUpdating = True
+Application.ScreenUpdating = False
 
 ' Create a copy of the template worksheet
+Dim ws_cur As Worksheet: Set ws_cur = ActiveSheet
 ws_tmp.Copy After:=ws_tmp
+
+'ws_cur.Parent.Parent.Activate
+'ws_cur.Parent.Activate
+ws_cur.Activate
+
 Dim ws_out As Worksheet: Set ws_out = ws_tmp.Parent.Sheets(ws_tmp.index + 1)
 
 ' Replace the token strings with the MainRecord values
 Dim main_record As cMainRecord: Set main_record = transColl(1).MainRecord
 Call ReplaceTokens(ws_out, main_record, invoice_number, date_)
 
-' Reshape the ListObject (Excel table) and the Invoice cells
+' Reshape the ListObject (i.e., the Excel table) and the Invoice cells
 Dim rows_expect As Long: rows_expect = transColl.count
 Dim lo As ListObject: Set lo = ws_out.ListObjects(1)
 Dim row_lot As Long: row_lot = ReshapeTableAndInvoice(lo, rows_expect)
@@ -168,10 +226,12 @@ For Each tr In transColl
     For Each tc In TransactionColumn2InvoiceHeaderColumn
         col = TransactionColumn2InvoiceHeaderColumn(tc)
         Dim val: val = CallByName(tr, tc, VbGet)
+        
         ' Adjust the UnitPrice with the tax rate so the Transactions sum (which is what shops would charge) is the same as the invoice "TOTAL" field.
-        If tc = "UnitPrice" Then
-            val = val / (1 - main_.TAX_RATE)
-        End If
+        'If tc = "UnitPrice" Then
+        '    val = val / (1 - main_.TAX_RATE)
+        'End If
+        
         ws_out.Cells(row, col) = val
     Next tc
     row = row + 1

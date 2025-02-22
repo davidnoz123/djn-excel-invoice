@@ -16,8 +16,14 @@ Sub Inite(invoice_pdf As String, main_ As cMainData, main_record As cMainRecord,
 Dim t As TextStream: Set t = fso.OpenTextFile(main_record.EmailTemplatex)
 Dim email_template_s As String: email_template_s = t.ReadAll
 
-email_template_s = Replace(email_template_s, "{RecipientName}", main_record.RecipientNameEmail)
+'email_template_s = Replace(email_template_s, "{RecipientName}", main_record.RecipientNameEmail)
 email_template_s = Replace(email_template_s, "{YourBusinessName}", main_.YOUR_BUSINESS_NAME)
+
+Dim field_name
+For Each field_name In main_record.FieldName2Value.Keys()
+    Dim field_value: field_value = main_record.FieldName2Value(field_name)
+    email_template_s = Replace(email_template_s, "{" + field_name + "}", CStr(field_value))
+Next field_name
 
 Dim OutlookApp As Outlook.Application: Set OutlookApp = SafeGetOutlookApp()
 Set email = OutlookApp.CreateItem(olMailItem)

@@ -183,14 +183,15 @@ End Function
 Function SafeAddWorksheet(wb As Workbook, sWorksheetName As String) As Worksheet
 On Error Resume Next
 Dim rSelection As Range: Set rSelection = Selection
-On Error GoTo 10
 Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
+On Error GoTo 10
 Application.ScreenUpdating = False
 Set SafeAddWorksheet = wb.Sheets.Add()
 Application.ScreenUpdating = bScreenUpdating
 SafeAddWorksheet.name = sWorksheetName
 GoTo 20
 10:
+Application.ScreenUpdating = bScreenUpdating
 Call ErrorExit("Utils.SafeAddWorksheet: Failed to add worksheet : " + sWorksheetName)
 20:
 On Error Resume Next
@@ -227,8 +228,8 @@ Application.ScreenUpdating = bScreenUpdating
 If delete_worksheet Then Call DeleteWorksheetSilent(ws)
 Call ErrorExit("Failure exporting PDF:'" + Err.Description + "'")
 90:
-If delete_worksheet Then Call DeleteWorksheetSilent(ws)
 Application.ScreenUpdating = bScreenUpdating
+If delete_worksheet Then Call DeleteWorksheetSilent(ws)
 End Sub
 
 Sub DeleteWorksheetSilent(ws)
