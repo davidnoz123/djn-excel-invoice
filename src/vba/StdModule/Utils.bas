@@ -7,6 +7,16 @@ MsgBox msg, vbCritical, "Error"
 End
 End Sub
 
+Sub ErrorExitX(msg As String, Optional rng As Range = Nothing)
+If Not rng Is Nothing Then
+    On Error Resume Next
+    rng.Parent.Parent.Activate
+    rng.Parent.Activate
+    rng.Select
+End If
+Call ErrorExit(msg)
+End Sub
+
 Sub Logg(msg As String)
 On Error Resume Next
 Debug.Print msg
@@ -161,6 +171,28 @@ Exit Function
 WsExists = False
 End Function
 
+Function WbExists(sName As String) As Boolean
+On Error GoTo 10
+Dim wb As Workbook
+Set wb = Workbooks(sName)
+WbExists = True
+Exit Function
+10:
+WbExists = False
+End Function
+
+Function WorkbookIsOpen(sPath As String, ByRef wb As Workbook) As Boolean
+Dim fso As New FileSystemObject
+Dim sName As String: sName = fso.GetFileName(sPath)
+On Error GoTo 10
+Set wb = Application.Workbooks(sName)
+WorkbookIsOpen = True
+Exit Function
+10:
+Set wb = Nothing
+WorkbookIsOpen = False
+End Function
+
 Function SafeGetWorksheet(wb As Workbook, sWorksheetName As String, Optional ByVal bEnsureEmpty As Boolean = False) As Worksheet
 If wb Is Nothing Then
   Call ErrorExit("Utils.SafeGetWorksheet:wb Is Nothing")
@@ -283,3 +315,274 @@ For Each kk In c
 Next kk
 c2a = a
 End Function
+
+
+Function ParseCellReference(ref As String) As Variant
+    Dim matches As Object
+    Dim dirPath As String, wbName As String, wsName As String, cellRef As String
+    
+    ref = Trim(ref)
+    
+    ' Create regex object
+    Dim regex As New VBScript_RegExp_55.RegExp
+    regex.Global = True
+    regex.IgnoreCase = True
+    
+    ' Regular expression pattern to match directory, workbook, sheet, and cell
+    Dim a2 As String: a2 = "([^!\[\]]+\\)?"      ' Capture the **directory path**
+    Dim a3 As String: a3 = "(\[?[^'!\]]+\]?)?"   ' Capture the **workbook name** inside `[ ]`
+    Dim a4 As String: a4 = "([^\\\]!']+)?"       ' Capture the **worksheet name**
+    Dim a5 As String: a5 = "(![^\\\]]*)?"        ' Capture the **cell reference**
+    regex.Pattern = "^[']?" + a2 + a3 + a4 + "[']?" + a5 + "$"
+    
+
+    ' Execute regex match
+    If regex.Test(ref) Then
+        Set matches = regex.Execute(ref)
+        
+        ' Extract components
+        If matches.count > 0 Then
+            Dim i As Long: i = 0
+            dirPath = matches(0).SubMatches(i)
+            i = i + 1
+            wbName = matches(0).SubMatches(i)
+            If Len(wbName) > 0 Then
+                If Left(wbName, 1) = "[" Then
+                    wbName = Mid(wbName, 2, Len(wbName) - 2)
+                Else
+                    wsName = wbName
+                    wbName = ""
+                End If
+            End If
+            i = i + 1
+            If wsName = "" Then
+                wsName = matches(0).SubMatches(i)
+            End If
+            i = i + 1
+            cellRef = matches(0).SubMatches(i)  ' Worksheet name
+            If Len(cellRef) > 0 Then
+                cellRef = Mid(cellRef, 2)
+            End If
+        End If
+    End If
+    
+    ' Return array with results
+    ParseCellReference = Array(dirPath, wbName, wsName, cellRef)
+End Function
+
+Sub aaaRunParseCellReferenceTests(xx)
+    Dim testCases As Variant
+    Dim i As Integer
+    Dim Result As Variant
+    Dim inputRef As String
+    Dim expectedDir As String, expectedWb As String, expectedWs As String, expectedCell As String
+    Dim pass As Boolean
+
+    ' Define test cases: {Input, Expected Directory, Expected Workbook, Expected Worksheet, Expected Cell}
+    testCases = Array( _
+        Array("'C:\Users\John\Docs\[Workbook.xlsx]Sheet1'!A1", "C:\Users\John\Docs\", "Workbook.xlsx", "Sheet1", "A1"), _
+        Array("[Workbook.xlsx]Sheet2!B5", "", "Workbook.xlsx", "Sheet2", "B5"), _
+        Array("Sheet3!C10", "", "", "Sheet3", "C10"), _
+        Array("'Sheet 1'!D20", "", "", "Sheet 1", "D20"), _
+        Array("'C:\Folder\[Test File.xlsx]Sheet5'!E7", "C:\Folder\", "Test File.xlsx", "Sheet5", "E7"), _
+        Array("[Data.xlsx]Sheet6!F9", "", "Data.xlsx", "Sheet6", "F9"), _
+        Array("'[Another Workbook.xlsx]Sheet7'!G12", "", "Another Workbook.xlsx", "Sheet7", "G12"), _
+        Array("C:\Folder\[Book.xlsx]SheetX!H15", "C:\Folder\", "Book.xlsx", "SheetX", "H15"), _
+        Array("SheetOnly", "", "", "SheetOnly", ""), _
+        Array("'[Workbook.xlsx]Sheet 10'!I5", "", "Workbook.xlsx", "Sheet 10", "I5"), _
+        Array("'C:\Users\[MyWorkbook.xlsx]DataSheet'!J1", "C:\Users\", "MyWorkbook.xlsx", "DataSheet", "J1"), _
+        Array("[Report.xlsx]AnnualReport!K8", "", "Report.xlsx", "AnnualReport", "K8"), _
+        Array("'D:\Projects\[Budget.xlsx]Summary'!L4", "D:\Projects\", "Budget.xlsx", "Summary", "L4"), _
+        Array("'[Client Data.xlsx]Overview'!M2", "", "Client Data.xlsx", "Overview", "M2"), _
+        Array("'C:\Finance\[2024Report.xlsx]Revenue'!N9", "C:\Finance\", "2024Report.xlsx", "Revenue", "N9") _
+    )
+
+    ' Loop through test cases
+    For i = LBound(testCases) To UBound(testCases)
+        'If i <> 8 Then GoTo skip
+        
+        inputRef = testCases(i)(0)
+        expectedDir = testCases(i)(1)
+        expectedWb = testCases(i)(2)
+        expectedWs = testCases(i)(3)
+        expectedCell = testCases(i)(4)
+
+        Result = ParseCellReference(inputRef)
+        
+        ' Check if results match expected values
+        pass = (Result(0) = expectedDir) And (Result(1) = expectedWb) And (Result(2) = expectedWs) And (Result(3) = expectedCell)
+
+        If pass Then
+            'Debug.Print "? Test " & i & " PASSED: " & inputRef
+        Else
+            Debug.Print "? Test " & i & " FAILED: " & inputRef
+            Debug.Print "   Expected: [" & expectedDir & "], [" & expectedWb & "], [" & expectedWs & "], [" & expectedCell & "]"
+            Debug.Print "   Actual:   [" & Result(0) & "], [" & Result(1) & "], [" & Result(2) & "], [" & Result(3) & "]"
+        End If
+skip:
+    Next i
+    
+    Debug.Print "? All tests completed."
+End Sub
+
+
+
+Function Disjunction(Range1 As Range, Range2 As Range) As Range
+    Dim cell As Range
+    Dim Result As Range
+    
+    ' Loop through Range1 and add cells not in Range2
+    For Each cell In Range1
+        If Intersect(cell, Range2) Is Nothing Then
+            If Result Is Nothing Then
+                Set Result = cell
+            Else
+                Set Result = Union(Result, cell)
+            End If
+        End If
+    Next cell
+    
+    ' Loop through Range2 and add cells not in Range1
+    For Each cell In Range2
+        If Intersect(cell, Range1) Is Nothing Then
+            If Result Is Nothing Then
+                Set Result = cell
+            Else
+                Set Result = Union(Result, cell)
+            End If
+        End If
+    Next cell
+    
+    ' Return result
+    Set Disjunction = Result
+End Function
+
+
+Function GetNonFormulaCells(inputRange As Range) As Range
+    Dim cell As Range
+    Dim formulaRange As Range
+    
+    ' Loop through each cell in the input range
+    For Each cell In inputRange
+        ' Check if the cell contains a formula
+        If Not cell.HasFormula Then
+            ' Build the formula range dynamically
+            If formulaRange Is Nothing Then
+                Set formulaRange = cell
+            Else
+                Set formulaRange = Union(formulaRange, cell)
+            End If
+        End If
+    Next cell
+    
+    ' Return the resulting range (could be Nothing if no formulas found)
+    Set GetNonFormulaCells = formulaRange
+End Function
+
+Private Sub SafeGetWorkbook_SafeSaveAs(wb As Workbook, sPath As String, ByVal FileFormat As XlFileFormat)
+Dim bDisplayAlerts As Boolean: bDisplayAlerts = Application.DisplayAlerts
+Application.DisplayAlerts = False
+On Error GoTo 10
+Call wb.SaveAs(sPath, FileFormat:=FileFormat)
+Application.DisplayAlerts = bDisplayAlerts
+Exit Sub
+10:
+Application.DisplayAlerts = bDisplayAlerts
+Call ErrorExit("Utils.SafeGetWorkbook_SafeSaveAs:Failed to save workbook:" + Err.Description)
+End Sub
+
+Function SafeGetWorkbook(sPath As String, ByRef bFileAlreadyOpen As Boolean, Optional sTemplate As String = "", Optional ByVal bEnsureEmpty As Boolean = False, Optional ByVal bUpdateLinks As Boolean = True) As Workbook
+Dim wb As Workbook: Set wb = Nothing
+If Trim(sPath) = "" Then
+  GoTo exit_now
+End If
+
+If sTemplate <> "" And bEnsureEmpty Then
+  Call ErrorExit("Utils.SafeGetWorkbook:Inconsistent arguments:sTemplate <> """" And bEnsureEmpty")
+End If
+  
+Dim fso As New FileSystemObject
+Dim sWorkbook As String: sWorkbook = fso.GetFileName(sPath)
+
+If LCase(sWorkbook) = LCase(ThisWorkbook.name) Then
+  If bEnsureEmpty Then
+    Call ErrorExit("Utils.SafeGetWorkbook:LCase(sWorkbook) = LCase(ThisWorkbook.Name) And bEnsureEmpty")
+  End If
+  bFileAlreadyOpen = True
+  Set wb = ThisWorkbook
+Else
+  Dim bReopenTemplate As Boolean: bReopenTemplate = False
+  Dim bDisplayAlerts As Boolean: bDisplayAlerts = Application.DisplayAlerts
+  Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
+  
+  Dim wbActive As Workbook: Set wbActive = ActiveWorkbook
+    
+  bFileAlreadyOpen = WorkbookIsOpen(sPath, wb)
+  If bFileAlreadyOpen Then
+    If bEnsureEmpty Then
+      Call wb.Close(SaveChanges:=False)
+    Else
+      If fso.GetAbsolutePathName(wb.Path + "\\" + wb.name) = fso.GetAbsolutePathName(sPath) Then
+        If sTemplate = "" Then
+          GoTo exit_now
+        End If
+      End If
+      Call wb.Close(SaveChanges:=True)
+    End If
+  End If
+  
+  If fso.FileExists(sPath) And Not bEnsureEmpty And sTemplate = "" Then
+    Application.ScreenUpdating = False
+    On Error Resume Next
+    Set wb = Application.Workbooks.Open(sPath, UpdateLinks:=bUpdateLinks)
+    If Not wbActive Is Nothing Then wbActive.Activate
+    Application.ScreenUpdating = bScreenUpdating
+  Else
+  
+    Dim bTemplateFileExists As Boolean: bTemplateFileExists = fso.FileExists(sTemplate)
+    If bTemplateFileExists Then
+      Dim wbTemplate As Workbook
+      Dim bTemplateIsOpen As Boolean: bTemplateIsOpen = WorkbookIsOpen(sTemplate, wbTemplate)
+      If bTemplateIsOpen Then
+        If fso.GetAbsolutePathName(sTemplate) = fso.GetAbsolutePathName(wbTemplate.FullNameURLEncoded) Then
+          bReopenTemplate = True
+          Call wbTemplate.Close(SaveChanges:=True)
+        End If
+      End If
+    End If
+  
+    Application.ScreenUpdating = False
+    On Error Resume Next
+    Set wb = Application.Workbooks.Add(IIf(bTemplateFileExists, sTemplate, ""))
+    If Not wbActive Is Nothing Then wbActive.Activate
+    Application.ScreenUpdating = bScreenUpdating
+    
+    Dim FileFormat As XlFileFormat
+    Dim sExt As String: sExt = LCase(Trim(fso.GetExtensionName(sPath)))
+    Select Case sExt
+    Case "xlsx": FileFormat = xlWorkbookDefault
+    Case "xlsm": FileFormat = xlOpenXMLWorkbookMacroEnabled
+    Case "xlsb": FileFormat = 50
+    Case "csv": FileFormat = xlCSV
+    Case Else
+      Call ErrorExit("Utils.SafeGetWorkbook:Unexpected file extension:" + CStr(sExt))
+    End Select
+    
+    Call SafeGetWorkbook_SafeSaveAs(wb, sPath, FileFormat)
+    
+    If bReopenTemplate Then
+      Application.ScreenUpdating = False
+      On Error Resume Next
+      Call Application.Workbooks.Open(sTemplate)
+      If Not wbActive Is Nothing Then wbActive.Activate
+      Application.ScreenUpdating = bScreenUpdating
+    End If
+  End If
+End If
+
+exit_now:
+
+Set SafeGetWorkbook = wb
+
+End Function
+

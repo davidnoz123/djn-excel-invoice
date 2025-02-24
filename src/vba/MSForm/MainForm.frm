@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainForm 
    Caption         =   "Export Invoice Actions "
-   ClientHeight    =   1245
+   ClientHeight    =   1635
    ClientLeft      =   105
    ClientTop       =   450
    ClientWidth     =   13695
@@ -13,6 +13,8 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
+
 
 
 
@@ -75,5 +77,5 @@ End If
 End Sub
 
 Private Sub UserForm_Initialize()
-EmailOptionNone.Value = True
+ExcelInvoiceOnly.Value = True
 End Sub

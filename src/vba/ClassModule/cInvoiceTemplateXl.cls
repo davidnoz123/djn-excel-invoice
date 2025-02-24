@@ -12,39 +12,41 @@ Option Explicit
 ' https://create.microsoft.com/en-us/templates/invoices
 ' https://create.microsoft.com/en-us/search?filters=invoices
 
-Const INVOICE_TABLE_TEMPLATES_XLS = "invoice_templates.xlsx"
+Const INVOICE_TEMP_WORKBOOK = "InvoiceTemplateTemp.xlsx"
 
 Dim fso As New FileSystemObject
 Dim ws_tmp As Worksheet
 Dim TransactionColumn2InvoiceHeaderColumn As Scripting.Dictionary
 
-Function SafeGetTemplateWorkbook() As Workbook
-If True Then
-    Set SafeGetTemplateWorkbook = ThisWorkbook
-Else
-    Dim wb As Workbook
-    For Each wb In Workbooks
-      If INVOICE_TABLE_TEMPLATES_XLS = wb.name Then
-        Set SafeGetTemplateWorkbook = wb
-        GoTo 10
-      End If
-    Next wb
-    Dim template_file As String: template_file = fso.GetAbsolutePathName(ThisWorkbook.Path + "\" + INVOICE_TABLE_TEMPLATES_XLS)
-    If Not fso.FileExists(template_file) Then
-        Call ErrorExit("Missing Invoice Templates Excel Workbook:'" + template_file + "'")
-    End If
-    Dim template_base As String: template_base = fso.GetFileName(template_file)
-    Set SafeGetTemplateWorkbook = Workbooks.Open(template_file, ReadOnly:=True)
-10:
-End If
-End Function
-
 Sub Init(main_ As cCustomerData, template_name As String)
-Dim wb As Workbook: Set wb = SafeGetTemplateWorkbook
-If Not WsExists(wb, template_name) Then
+Dim ref: ref = ParseCellReference(template_name)
+Dim wb As Workbook: Set wb = Nothing
+If ref(1) <> "" Then
+    Dim drName As String: drName = ref(0)
+    If drName = "" Then
+        drName = ThisWorkbook.Path
+    Else
+        Dim fso As New FileSystemObject
+        drName = fso.GetAbsolutePathName(drName)
+    End If
+    Dim wbName As String: wbName = ref(1)
+    If WbExists(wbName) Then
+        Set wb = Workbooks(wbName)
+    Else
+        Dim full_path As String: full_path = drName + "\" + wbName
+        If fso.FileExists(full_path) Then
+            Set wb = Workbooks.Open(full_path) ' , ReadOnly:=True
+        Else
+            Call ErrorExit("Failed to find template_name:'" + template_name + "' FileDoesNotExist:'" + full_path + "'")
+        End If
+    End If
+End If
+If wb Is Nothing Then Set wb = ThisWorkbook
+Dim worksheet_name As String: worksheet_name = ref(2)
+If Not WsExists(wb, worksheet_name) Then
     Call ErrorExit("Missing worksheet in Invoice Templates Excel Workbook:'" + template_name + "'")
 End If
-Set ws_tmp = wb.Worksheets(template_name)
+Set ws_tmp = wb.Worksheets(worksheet_name)
 If ws_tmp.ListObjects.count <> 1 Then
     ws_tmp.Parent.Activate
     ws_tmp.Activate
@@ -99,6 +101,10 @@ End Sub
 
 Private Function ReshapeTableAndInvoice(lo As ListObject, rows_expect As Long) As Long
 
+If lo.DataBodyRange Is Nothing Then
+    Call ErrorExitX("Table has an empty DataBodyRange", lo.HeaderRowRange)
+End If
+
 Dim ws_out As Worksheet: Set ws_out = lo.Parent
 
 Dim row_lot As Long, col_lol As Long, row_lob As Long, col_lor As Long
@@ -122,23 +128,59 @@ For k = row_top To row_bot
     row_heights(k) = ws_out.Rows(k).Height
 Next k
 
+'Application.ScreenUpdating = True
+
+' Clear out all the values of table data range cells
+GetNonFormulaCells(lo.DataBodyRange).ClearContents
+
+Dim ff As Range, dd As Range
 Dim rows_actual As Long: rows_actual = lo.DataBodyRange.Rows.count
-If rows_actual <> rows_expect Then
+If rows_actual = rows_expect Then
+    ' The table has the right number of cells
+Else
+    ' The table doesn't have the right number of cells
     Dim rr As Range
     If rows_actual > rows_expect Then
-    
-        ' Delete the excess rows in the table
-        Set rr = ws_out.Range(ws_out.Cells(row_lot, col_lol), ws_out.Cells(row_lot + rows_actual - rows_expect - 1, col_lor))
-        Call rr.Delete(Shift:=xlUp)
+        ' We've got too many cells in the table
         
-        ' Columns to the left and right of the table will now be hanging below the end of the invoice ... delete the rows of this overhang
-        Set rr = ws_out.Range(ws_out.Cells(row_bot - (rows_actual - rows_expect - 1), col_lhs), ws_out.Cells(row_bot, col_rhs))
-        Call rr.Delete(Shift:=xlUp)
+        ' Get the cell range of the table cells that we might consider to delete
+        'ws_out.Parent.Activate
+        'ws_out.Activate
+        Set rr = ws_out.Range(ws_out.Cells(row_lot, col_lol), ws_out.Cells(row_lot + rows_actual - rows_expect - 1, col_lor))
+        
+        'rr.Select
+        
+        ' Get the random of the overhang of the worksheet after we delete the table rows in range 'rr'
+        Set dd = ws_out.Range(ws_out.Cells(row_lot, col_lhs), ws_out.Cells(row_lot + rows_actual - rows_expect - 1, col_rhs))
+        
+        'dd.Select
+        
+        ' Get the disjunction of rr and dd ... if these cells contain values, then we don't want to delete anything.
+        Set ff = Disjunction(rr, dd)
+        'ff.Select
+        Dim tt As Range: Set tt = ff.Find("*")
+        
+        If Not tt Is Nothing Then
+            ' Don't delete anything
+            ReshapeTableAndInvoice = rr.row
+        Else
+            ' We will only be deleting empty cells ... this is fine
+            
+            ' Delete the excess rows in the table
+            Call rr.Delete(Shift:=xlUp)
+            
+            ' Delete the excess rows outside the table
+            For Each tt In ff.Areas
+                Call tt.Delete(Shift:=xlUp)
+            Next tt
+            
+        End If
 
     Else
-    
+        ' We've got too few cells in the table
         
         Dim row_lob_tmp As Long
+        Dim src As Range, dst As Range
         
         ' Add new rows to the table (as fast as we can)
         row_lob_tmp = row_lob
@@ -153,27 +195,43 @@ If rows_actual <> rows_expect Then
             row_lob_tmp = row_lob_tmp + (row_lob_tmp - row_lot) + 1
         Wend
         
+        If True Then
+            ' Paste the formatting into the new cells now to the left and right up to the end of the invoice
+
+            If col_lol > col_lhs Then
+                Set src = ws_out.Range(ws_out.Cells(row_lob + 1, col_lhs), ws_out.Cells(row_bot, col_lol - 1))
+                src.Copy
+                Set dst = ws_out.Cells(row_lob + 1 - (rows_actual - rows_expect), col_lhs)
+                Call dst.PasteSpecial(xlPasteAll)
+                
+                Set src = ws_out.Range(ws_out.Cells(row_lob, col_lhs), ws_out.Cells(row_lob, col_lol - 1))
+                src.Copy
+                Set dst = ws_out.Range(ws_out.Cells(row_lob + 1, col_lhs), ws_out.Cells(row_lob - (rows_actual - rows_expect), col_lol - 1))
+                Call dst.PasteSpecial(xlPasteFormats)
+                dst.ClearContents
+            End If
+            
+            If col_rhs > col_lor Then
+                Set src = ws_out.Range(ws_out.Cells(row_lob + 1, col_lor + 1), ws_out.Cells(row_bot, col_rhs))
+                src.Copy
+                Set dst = ws_out.Cells(row_lob + 1 - (rows_actual - rows_expect), col_lor + 1)
+                Call dst.PasteSpecial(xlPasteAll)
+                
+                Set src = ws_out.Range(ws_out.Cells(row_lob, col_lor + 1), ws_out.Cells(row_lob, col_rhs))
+                src.Copy
+                Set dst = ws_out.Range(ws_out.Cells(row_lob + 1, col_lor + 1), ws_out.Cells(row_lob - (rows_actual - rows_expect), col_rhs))
+                Call dst.PasteSpecial(xlPasteFormats)
+                dst.ClearContents
+            End If
+        End If
+        
         ' Reset the row heights after the table rows are deleted
         For k = row_lob + 1 To row_lob + rows_expect - 2
             'ws_out.Rows(k).Select
             ws_out.Rows(k).RowHeight = row_heights(row_lob)
         Next k
         
-        ' Paste the formatting into the new cells now to the left and right up to the end of the invoice
-        Dim src As Range, dst As Range
-        If col_lol > col_lhs Then
-            Set src = ws_out.Range(ws_out.Cells(row_bot, col_lhs), ws_out.Cells(row_bot, col_lol - 1))
-            src.Copy
-            Set dst = ws_out.Range(ws_out.Cells(row_bot + 1, col_lhs), ws_out.Cells(row_bot - (rows_actual - rows_expect), col_lol - 1))
-            Call dst.PasteSpecial(xlPasteFormats)
-        End If
-        
-        If col_rhs > col_lor Then
-            Set src = ws_out.Range(ws_out.Cells(row_bot, col_lor + 1), ws_out.Cells(row_bot, col_rhs))
-            src.Copy
-            Set dst = ws_out.Range(ws_out.Cells(row_bot + 1, col_lor + 1), ws_out.Cells(row_bot - (rows_actual - rows_expect), col_rhs))
-            Call dst.PasteSpecial(xlPasteFormats)
-        End If
+
         
     End If
     
@@ -187,19 +245,56 @@ End If
 
 End Function
 
+Sub ClearInvoiceTempWorkbook()
+Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
+Dim bDisplayAlerts As Boolean: bDisplayAlerts = Application.DisplayAlerts
+On Error GoTo 10
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim wb_out As Workbook
+Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.Path + "\" + INVOICE_TEMP_WORKBOOK
+If Not WorkbookIsOpen(tmp_xlsx, wb_out) Then
+    Dim bFileAlreadyOpen As Boolean
+    Set wb_out = SafeGetWorkbook(tmp_xlsx, bFileAlreadyOpen)
+End If
+
+Dim i As Long: i = wb_out.Sheets.count
+While i > 1
+    wb_out.Sheets(i).Delete
+    i = i - 1
+Wend
+
+GoTo 20
+10:
+Application.DisplayAlerts = bDisplayAlerts
+Application.ScreenUpdating = bScreenUpdating
+Call ErrorExit("Failure deleting tmporary invoice worksheet:'" + Err.Description + "'")
+20:
+Application.DisplayAlerts = bDisplayAlerts
+Application.ScreenUpdating = bScreenUpdating
+End Sub
+
 Function CreateInvoiceWorksheet(main_ As cCustomerData, transColl As Collection, invoice_number As Long, date_ As Date) As Worksheet
 Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
 On Error GoTo 10
 Application.ScreenUpdating = False
 
+Dim wb_out As Workbook
+Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.Path + "\" + INVOICE_TEMP_WORKBOOK
+If Not WorkbookIsOpen(tmp_xlsx, wb_out) Then
+    Dim bFileAlreadyOpen As Boolean
+    Set wb_out = SafeGetWorkbook(tmp_xlsx, bFileAlreadyOpen)
+End If
+
 Dim ws_cur As Worksheet: Set ws_cur = ActiveSheet ' Get the current active sheet
 
 ' Create a copy of the template worksheet
-ws_tmp.Copy After:=ws_tmp ' Copy ws_tmp and put it after ws_tmp
+ws_tmp.Copy After:=wb_out.Sheets(wb_out.Sheets.count) ' Copy ws_tmp and put at the end of wb_out
 
 ws_cur.Activate ' The call to ws_tmp.Copy has changed the active sheet ... restore the active sheet
 
-Dim ws_out As Worksheet: Set ws_out = ws_tmp.Parent.Sheets(ws_tmp.index + 1)
+Dim ws_out As Worksheet: Set ws_out = wb_out.Sheets(wb_out.Sheets.count)
 
 ' Replace the token strings with the CustomerRecord values
 Dim main_record As cCustomerRecord: Set main_record = transColl(1).CustomerRecord

@@ -88,6 +88,9 @@ If Not fso.FolderExists(temp_folder) Then
   Call fso.CreateFolder(temp_folder)
 End If
 
+Dim it As New cInvoiceTemplateXl
+Call it.ClearInvoiceTempWorkbook
+
 Dim CustomerID
 count = 0
 For Each CustomerID In custId2Trans.Keys()
@@ -112,42 +115,46 @@ For Each CustomerID In custId2Trans.Keys()
     Dim invoice_base_name As String: invoice_base_name = temp_folder + "\" + now_str + "." + mr.CustomerID + "." + format(CDate(date_), "yyyy-mm-dd") + "." + format(invoice_number, "0000000")
     Dim invoice_pdf As String: invoice_pdf = invoice_base_name + ".pdf"
     
-    Dim it As cInvoiceTemplateXl: Set it = itc.GetInvoiceTemplate(main_, mr.InvoiceTemplatex)
+    Set it = itc.GetInvoiceTemplate(main_, mr.InvoiceTemplatex)
     Dim ws As Worksheet: Set ws = it.CreateInvoiceWorksheet(main_, transColl, invoice_number, CDate(date_))
-    Call ExportWorksheetPDFSilent(ws, invoice_pdf, True, MainForm.EmailOptionNone)
-    'Call doc.SaveAs2(invoice_base_name + ".docx")
-    'Call doc.SaveAs2(invoice_pdf, Word.wdExportFormatPDF)
+    If MainForm.ExcelInvoiceOnly Then
         
-    If mr.EmailAddressx = "" Then
-      'If False Then
-      '  Call doc.Close(False)
-      'End If
-    ElseIf Not MainForm.EmailOptionNone Then
-      'Call doc.Close(False)
-      
-      If MainForm.EmailOptionCreateOnly Or MainForm.EmailOptionSend Then
-        MainForm.Do_Events "Creating Email ..."
-        Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
-        Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
-        Call ie.Inite(invoice_pdf, main_, mr, invoice_number, CDate(date_), display_email, main_.SUBJECT_LINE_PREFIX)
-      End If
-      
-      If MainForm.EmailOptionSend Then
-        MainForm.Do_Events "Sending Email ..."
-        On Error GoTo 10
-        ie.email.Send
-        On Error GoTo 0
-        GoTo 20
+    Else
+        Call ExportWorksheetPDFSilent(ws, invoice_pdf, True, MainForm.EmailOptionNone)
+        'Call doc.SaveAs2(invoice_base_name + ".docx")
+        'Call doc.SaveAs2(invoice_pdf, Word.wdExportFormatPDF)
+            
+        If mr.EmailAddressx = "" Then
+          'If False Then
+          '  Call doc.Close(False)
+          'End If
+        ElseIf Not MainForm.EmailOptionNone Then
+          'Call doc.Close(False)
+          
+          If MainForm.EmailOptionCreateOnly Or MainForm.EmailOptionSend Then
+            MainForm.Do_Events "Creating Email ..."
+            Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
+            Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
+            Call ie.Inite(invoice_pdf, main_, mr, invoice_number, CDate(date_), display_email, main_.SUBJECT_LINE_PREFIX)
+          End If
+          
+          If MainForm.EmailOptionSend Then
+            MainForm.Do_Events "Sending Email ..."
+            On Error GoTo 10
+            ie.email.Send
+            On Error GoTo 0
+            GoTo 20
 10:
-        Call ErrorExit("Failure sending email:'" + Err.Description + "'")
+            Call ErrorExit("Failure sending email:'" + Err.Description + "'")
 20:
-      End If
+          End If
+        End If
+        
+        For Each t In transColl
+          tws.Cells(t.rowIndex, t.Parent.col_ProcessedWhen) = now_str
+          tws.Cells(t.rowIndex, t.Parent.col_InvoiceNo) = invoice_number
+        Next t
     End If
-    
-    For Each t In transColl
-      tws.Cells(t.rowIndex, t.Parent.col_ProcessedWhen) = now_str
-      tws.Cells(t.rowIndex, t.Parent.col_InvoiceNo) = invoice_number
-    Next t
     
   Next date_
 Next CustomerID
@@ -167,7 +174,8 @@ Application.ScreenUpdating = True
 If True Then
     Dim transaction_records As Collection: Set transaction_records = GetTransactionRecords(Empty)
     MainForm.ResetState transaction_records
-    MainForm.EmailOptionNone = True
+    MainForm.ExcelInvoiceOnly = True
+    MainForm.EmailOptionNone = False
     MainForm.EmailOptionCreateOnly = False
     MainForm.EmailOptionSend = False
     Call aProcessRun_Callback(transaction_records)
