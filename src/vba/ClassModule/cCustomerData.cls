@@ -33,6 +33,9 @@ Public FieldName2ColIndex As New Scripting.Dictionary
 
 Public SUBJECT_LINE_PREFIX As String
 Public YOUR_BUSINESS_NAME As String
+Public YOUR_BUSINESS_EMAIL As String
+Public YOUR_BUSINESS_SMTP_PASSWORD As String
+Public PYTHON_EXE As String
 
 Dim NEXT_INVOICE_NUMBER_txt As String
 Public INVOICE_COLUMN_2_TRANSACTION_COLUMN_MAP As New Scripting.Dictionary
@@ -136,8 +139,15 @@ End If
 Set wsMain = SafeGetWorksheet(ThisWorkbook, "Main")
 
 YOUR_BUSINESS_NAME = SafeFindKeyValueInRange(wsMain.UsedRange, "YOUR_BUSINESS_NAME", "Your Business")
+YOUR_BUSINESS_EMAIL = SafeFindKeyValueInRange(wsMain.UsedRange, "YOUR_BUSINESS_EMAIL", "your@business.com")
+YOUR_BUSINESS_SMTP_PASSWORD = SafeFindKeyValueInRange(wsMain.UsedRange, "YOUR_BUSINESS_SMTP_PASSWORD", "")
+PYTHON_EXE = SafeFindKeyValueInRange(wsMain.UsedRange, "PYTHON_EXE", "")
 SUBJECT_LINE_PREFIX = SafeFindKeyValueInRange(wsMain.UsedRange, "SUBJECT_LINE_PREFIX", YOUR_BUSINESS_NAME + " Invoice")
 NEXT_INVOICE_NUMBER_txt = ThisWorkbook_Path + "\" + SafeFindKeyValueInRange(wsMain.UsedRange, "NEXT_INVOICE_NUMBER_FILENAME", "NEXT_INVOICE_NUMBER.txt")
+
+If PYTHON_EXE <> "" And Not fso.FileExists(PYTHON_EXE) Then
+    'Call ErrorExit("PYTHON_EXE")
+End If
 
 Dim td As New cTransactionData
 

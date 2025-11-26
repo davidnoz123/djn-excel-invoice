@@ -29,6 +29,19 @@ Set email = OutlookApp.CreateItem(olMailItem)
 ' https://docs.microsoft.com/en-us/office/vba/api/outlook.attachments.add
 ' https://www.browserling.com/tools/image-to-base64
 On Error GoTo exit_with_failure
+
+If False Then
+    ' Find the account you want to send from
+    Dim acct As Outlook.Account      ' make sure this is declared As Outlook.Account
+    For Each acct In OutlookApp.Session.Accounts
+        If LCase(acct.SmtpAddress) = LCase(main_.YOUR_BUSINESS_EMAIL) Then
+            GoTo found_email_account
+        End If
+    Next acct
+    Call ErrorExit("Failed to find Outlook Account with SmtpAddress equal to:'" + main_.YOUR_BUSINESS_EMAIL + "'")
+found_email_account:
+End If
+
 With email
   If display_email Then
     .Display
@@ -44,6 +57,11 @@ With email
   .Subject = subject_line_prefix_s + ":" + format(invoice_number, "0000000")
   Call .Attachments.Add(invoice_pdf)
 End With
+
+If False Then
+    email.SendUsingAccount = acct
+End If
+
 Exit Sub
 exit_with_failure:
 Call ErrorExit("Unable to continue after failure creating email:'" + Err.Description + "'")

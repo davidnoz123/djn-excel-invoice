@@ -41,7 +41,9 @@ Dim transaction_records_ As Collection
 Public log_prefix As String
 
 Sub Do_Events(msg)
-Me.label.Caption = log_prefix + msg
+Dim s As String: s = log_prefix + msg
+Logg s
+Me.label.Caption = s
 DoEvents
 If ToggleState.Caption = "Stopping" Then
   Me.Hide

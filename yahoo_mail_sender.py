@@ -138,13 +138,13 @@ def send_via_yahoo(msg):
 
 
 if __name__ == "__main__":
-    YAHOO_USER = "davidnoz@yahoo.com"
-    with open(os.path.join(file__fileSysD, "YAHOO_APP_PASSWORD.txt"), "r") as ff:
-        YAHOO_APP_PASSWORD = ff.read().strip()    
-    MSG_PATH = os.path.join(file__fileSysD, "asxasx.msg")       # same path you used in VBA
-    
-    print("asxaxasxs-------------- BEG")
+    YAHOO_USER = os.environ["YAHOO_USER"] if "YAHOO_USER" in os.environ else "davidnoz@yahoo.com"
+    MSG_PATH = os.environ["MSG_PATH"] if "MSG_PATH" in os.environ else os.path.join(file__fileSysD, "asxasx.msg") # same path you used in VBA    
+    if "YAHOO_APP_PASSWORD" in os.environ:
+        YAHOO_APP_PASSWORD = os.environ["YAHOO_APP_PASSWORD"]
+    else:
+        1/0
+        with open(os.path.join(file__fileSysD, "YAHOO_APP_PASSWORD.txt"), "r") as ff:
+            YAHOO_APP_PASSWORD = ff.read().strip()    
     email_msg = build_email_from_msg(MSG_PATH)
-    print("asxaxasxs-------------- SND")
     send_via_yahoo(email_msg)
-    print("asxaxasxs-------------- END")

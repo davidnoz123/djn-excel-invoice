@@ -96,6 +96,7 @@ count = 0
 For Each CustomerID In custId2Trans.Keys()
   Set date2Trans = custId2Trans(CustomerID)
   Dim date_
+  Dim logger As New cPythonStdoutLogger
   For Each date_ In date2Trans.Keys()
     count = count + 1
     Dim prefix As String: prefix = "Processing Invoice " + Str(count) + " of " + Str(invoice_count) + ": " + CustomerID + " " + format(CDate(date_), "yyyy-mm-dd") + " "
@@ -114,6 +115,7 @@ For Each CustomerID In custId2Trans.Keys()
     Dim now_str As String: now_str = format(Now(), "yyyy-mm-dd-HH-MM-ss")
     Dim invoice_base_name As String: invoice_base_name = temp_folder + "\" + now_str + "." + mr.CustomerID + "." + format(CDate(date_), "yyyy-mm-dd") + "." + format(invoice_number, "0000000")
     Dim invoice_pdf As String: invoice_pdf = invoice_base_name + ".pdf"
+    Dim invoice_msg As String: invoice_msg = invoice_base_name + ".msg"
     
     Set it = itc.GetInvoiceTemplate(main_, mr.InvoiceTemplatex)
     Dim ws As Worksheet: Set ws = it.CreateInvoiceWorksheet(main_, transColl, invoice_number, CDate(date_))
@@ -141,13 +143,40 @@ For Each CustomerID In custId2Trans.Keys()
           If MainForm.EmailOptionSend Then
             MainForm.Do_Events "Sending Email ..."
             On Error GoTo 10
-            ie.email.Send
+            If main_.YOUR_BUSINESS_EMAIL = "" Or main_.YOUR_BUSINESS_SMTP_PASSWORD = "" Or main_.PYTHON_EXE = "" Then
+               ie.email.Send
+            Else
+                If Not fso.FileExists(main_.PYTHON_EXE) Then
+                    Call ErrorExit("main_.PYTHON_EXE does not exist:'" + main_.PYTHON_EXE + "'")
+                End If
+               ie.email.SaveAs invoice_msg, 3 ' 3 = olMSG in the Outlook object model
+               Dim rc As Long
+               Dim envDict As New Scripting.Dictionary
+               envDict("YAHOO_USER") = main_.YOUR_BUSINESS_EMAIL
+               envDict("YAHOO_APP_PASSWORD") = main_.YOUR_BUSINESS_SMTP_PASSWORD
+               envDict("MSG_PATH") = invoice_msg
+            
+               Call RunPythonNoStdin( _
+                        main_.PYTHON_EXE, _
+                        ThisWorkbook.Path + "\" + "yahoo_mail_sender.py", _
+                        args:="", _
+                        stdoutCallback:=logger, _
+                        envDict:=envDict, _
+                        exitCode:=rc)
+                        
+               If rc <> 0 Then
+                  Call ErrorExit("Python failed to send email. Check Immediate window for details")
+               End If
+            
+            End If
             On Error GoTo 0
             GoTo 20
 10:
             Call ErrorExit("Failure sending email:'" + Err.Description + "'")
 20:
           End If
+          
+          
         End If
         
         For Each t In transColl
@@ -174,10 +203,10 @@ Application.ScreenUpdating = True
 If True Then
     Dim transaction_records As Collection: Set transaction_records = GetTransactionRecords(Empty)
     MainForm.ResetState transaction_records
-    MainForm.ExcelInvoiceOnly = True
+    MainForm.ExcelInvoiceOnly = False
     MainForm.EmailOptionNone = False
     MainForm.EmailOptionCreateOnly = False
-    MainForm.EmailOptionSend = False
+    MainForm.EmailOptionSend = True
     Call aProcessRun_Callback(transaction_records)
 End If
 End Sub
