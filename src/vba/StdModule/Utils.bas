@@ -522,7 +522,7 @@ Else
     If bEnsureEmpty Then
       Call wb.Close(SaveChanges:=False)
     Else
-      If fso.GetAbsolutePathName(wb.Path + "\\" + wb.name) = fso.GetAbsolutePathName(sPath) Then
+      If fso.GetAbsolutePathName(wb.path + "\\" + wb.name) = fso.GetAbsolutePathName(sPath) Then
         If sTemplate = "" Then
           GoTo exit_now
         End If
@@ -586,3 +586,193 @@ Set SafeGetWorkbook = wb
 
 End Function
 
+
+
+Function EndsWith(ByVal s As String, ByVal ending As String) As Boolean
+    If Len(ending) > Len(s) Then
+        EndsWith = False
+    Else
+        EndsWith = (Right$(s, Len(ending)) = ending)
+    End If
+End Function
+
+Function Mondayised(d As Date) As Date
+    Select Case Weekday(d, vbMonday)
+        Case 6: Mondayised = d + 2   ' Sat ? Monday
+        Case 7: Mondayised = d + 1   ' Sun ? Monday
+        Case Else: Mondayised = d    ' Mon–Fri ? actual date
+    End Select
+End Function
+
+Function FourthMonday(year As Long, month As Long) As Date
+    Dim d As Date
+    d = DateSerial(year, month, 1)
+    
+    ' Move to first Monday
+    Do While Weekday(d, vbMonday) <> 1
+        d = d + 1
+    Loop
+    
+    ' Add 3 more Mondays ? fourth Monday
+    FourthMonday = d + 21
+End Function
+
+Function EasterDate(Y As Long) As Date
+    Dim a As Integer, b As Integer, c As Integer
+    Dim d As Integer, e As Integer, f As Integer
+    Dim g As Integer, h As Integer, i As Integer
+    Dim k As Integer, L As Integer, m As Integer
+    
+    a = Y Mod 19
+    b = Y \ 100
+    c = Y Mod 100
+    d = b \ 4
+    e = b Mod 4
+    f = (b + 8) \ 25
+    g = (b - f + 1) \ 3
+    h = (19 * a + b - d - g + 15) Mod 30
+    i = c \ 4
+    k = c Mod 4
+    L = (32 + 2 * e + 2 * i - h - k) Mod 7
+    m = (a + 11 * h + 22 * L) \ 451
+    
+    EasterDate = DateSerial(Y, (h + L - 7 * m + 114) \ 31, ((h + L - 7 * m + 114) Mod 31) + 1)
+End Function
+
+Function MatarikiDate(year As Long) As Date
+    Select Case year
+        Case 2022: MatarikiDate = #6/24/2022#
+        Case 2023: MatarikiDate = #7/14/2023#
+        Case 2024: MatarikiDate = #6/28/2024#
+        Case 2025: MatarikiDate = #6/20/2025#
+        Case 2026: MatarikiDate = #7/10/2026#
+        Case 2027: MatarikiDate = #6/25/2027#
+        Case 2028: MatarikiDate = #7/14/2028#
+        Case 2029: MatarikiDate = #7/6/2029#
+        Case 2030: MatarikiDate = #6/21/2030#
+        Case Else:
+            MatarikiDate = 0   ' Unknown future year — update as needed
+    End Select
+End Function
+
+Function NZPublicHolidays(year As Long) As Collection
+    Dim col As New Collection
+    Dim d As Date
+    
+    ' --- Fixed-date holidays with Mondayisation ---
+    col.Add Mondayised(DateSerial(year, 1, 1))   ' New Year’s Day
+    col.Add Mondayised(DateSerial(year, 1, 2))   ' Day After New Year’s Day
+    col.Add Mondayised(DateSerial(year, 2, 6))   ' Waitangi Day
+    col.Add Mondayised(DateSerial(year, 4, 25))  ' ANZAC Day
+    col.Add Mondayised(DateSerial(year, 6, 3))   ' King’s Birthday (first Monday in June)
+    ' Christmas
+    col.Add Mondayised(DateSerial(year, 12, 25)) ' Christmas Day
+    col.Add Mondayised(DateSerial(year, 12, 26)) ' Boxing Day
+    
+    ' --- Easter (Good Friday + Easter Monday) ---
+    Dim easter As Date
+    easter = EasterDate(year)
+    
+    col.Add easter - 2   ' Good Friday
+    col.Add easter + 1   ' Easter Monday
+    
+    ' --- Labour Day (4th Monday of October) ---
+    col.Add FourthMonday(year, 10)
+    
+    ' --- Matariki ---
+    Dim mata As Date
+    mata = MatarikiDate(year)
+    If mata <> 0 Then col.Add mata
+    
+    Set NZPublicHolidays = col
+End Function
+
+Function AddBusinessDays(startDate As Date, nDays As Long, holidays As Collection) As Date
+    Dim d As Date
+    Dim h As Variant
+    
+    d = startDate
+
+    Do While nDays > 0
+        d = d + 1
+        
+        ' Weekend?
+        If Weekday(d, vbMonday) > 5 Then
+            GoTo SkipDay
+        End If
+        
+        ' Holiday?
+        For Each h In holidays
+            If d = h Then GoTo SkipDay
+        Next h
+        
+        ' Valid business day
+        nDays = nDays - 1
+        
+SkipDay:
+    Loop
+
+    AddBusinessDays = d
+End Function
+
+Function NextBusinessDay(d As Date, holidays As Collection) As Date
+    Dim h As Variant
+    
+    Do
+        ' Weekend?
+        If Weekday(d, vbMonday) > 5 Then
+            d = d + 1
+            GoTo ContinueLoop
+        End If
+        
+        ' Holiday?
+        For Each h In holidays
+            If d = h Then
+                d = d + 1
+                GoTo ContinueLoop
+            End If
+        Next h
+        
+        Exit Do   ' Found business day
+        
+ContinueLoop:
+    Loop
+    
+    NextBusinessDay = d
+End Function
+
+Function InvoiceDueDate(invoiceDate As Date, termsDays As Long) As Date
+    Dim targetDate As Date
+    Dim holidays As Collection
+    
+    ' Build holidays for the year of invoice or due date
+    Set holidays = NZPublicHolidays(year(invoiceDate))
+    
+    ' Add the term days directly (calendar days)
+    targetDate = DateAdd("d", termsDays, invoiceDate)
+    
+    ' Round up to the next business day
+    InvoiceDueDate = NextBusinessDay(targetDate, holidays)
+End Function
+
+
+' Convert any file (e.g. PNG or JPG) to Base64 text
+Function FileToBase64(path As String) As String
+    Dim stm As Object
+    Dim xml As Object
+    Dim bytes() As Byte
+
+    Set stm = CreateObject("ADODB.Stream")
+    stm.Type = 1          ' adTypeBinary
+    stm.Open
+    stm.LoadFromFile path
+    bytes = stm.Read
+    stm.Close
+
+    Set xml = CreateObject("MSXML2.DOMDocument")
+    With xml.createElement("b64")
+        .DataType = "bin.base64"
+        .NodeTypedValue = bytes
+        FileToBase64 = .Text
+    End With
+End Function

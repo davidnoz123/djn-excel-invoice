@@ -70,12 +70,12 @@ For Each t In transaction_records
     Call custId2Trans.Add(t.CustomerID, date2Trans)
   End If
   Dim transColl As Collection
-  If date2Trans.Exists(t.InvoiceDate) Then
-    Set transColl = date2Trans(t.InvoiceDate)
+  If date2Trans.Exists(t.invoiceDate) Then
+    Set transColl = date2Trans(t.invoiceDate)
   Else
     invoice_count = invoice_count + 1
     Set transColl = New Collection
-    Call date2Trans.Add(t.InvoiceDate, transColl)
+    Call date2Trans.Add(t.invoiceDate, transColl)
   End If
   transColl.Add t
 Next t
@@ -118,7 +118,8 @@ For Each CustomerID In custId2Trans.Keys()
     Dim invoice_msg As String: invoice_msg = invoice_base_name + ".msg"
     
     Set it = itc.GetInvoiceTemplate(main_, mr.InvoiceTemplatex)
-    Dim ws As Worksheet: Set ws = it.CreateInvoiceWorksheet(main_, transColl, invoice_number, CDate(date_))
+    Dim inv_data As cInvoiceData
+    Dim ws As Worksheet: Set ws = it.CreateInvoiceWorksheet(main_, transColl, invoice_number, CDate(date_), inv_data)
     If MainForm.ExcelInvoiceOnly Then
         
     Else
@@ -137,7 +138,7 @@ For Each CustomerID In custId2Trans.Keys()
             MainForm.Do_Events "Creating Email ..."
             Dim ie As cInvoiceEmail: Set ie = New cInvoiceEmail
             Dim display_email As Boolean: display_email = MainForm.EmailOptionCreateOnly
-            Call ie.Inite(invoice_pdf, main_, mr, invoice_number, CDate(date_), display_email, main_.SUBJECT_LINE_PREFIX)
+            Call ie.Inite(invoice_pdf, main_, mr, invoice_number, CDate(date_), display_email, main_.SUBJECT_LINE_PREFIX, inv_data)
           End If
           
           If MainForm.EmailOptionSend Then
@@ -158,7 +159,7 @@ For Each CustomerID In custId2Trans.Keys()
             
                Call RunPythonNoStdin( _
                         main_.PYTHON_EXE, _
-                        ThisWorkbook.Path + "\" + "yahoo_mail_sender.py", _
+                        ThisWorkbook.path + "\" + "yahoo_mail_sender.py", _
                         args:="", _
                         stdoutCallback:=logger, _
                         envDict:=envDict, _
@@ -205,8 +206,8 @@ If True Then
     MainForm.ResetState transaction_records
     MainForm.ExcelInvoiceOnly = False
     MainForm.EmailOptionNone = False
-    MainForm.EmailOptionCreateOnly = False
-    MainForm.EmailOptionSend = True
+    MainForm.EmailOptionCreateOnly = True
+    MainForm.EmailOptionSend = False
     Call aProcessRun_Callback(transaction_records)
 End If
 End Sub

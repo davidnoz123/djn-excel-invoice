@@ -13,7 +13,7 @@ Public rowIndex As Long
 Public CustomerRecord As cCustomerRecord
 
 Public CustomerID As String
-Public InvoiceDate As Date
+Public invoiceDate As Date
 Public ProcessedWhen As String
 Public InvoiceNo As Long
 
@@ -48,7 +48,7 @@ If Me.CustomerID <> "" Then
     Call x_error_exit(rowIndex, td.col_InvoiceDate, "Missing or invalid InvoiceDate in transaction record. Provide dates in the form similar to '2021-07-21'")
   End If
   
-  Me.InvoiceDate = CDate(vInvoiceDate)
+  Me.invoiceDate = CDate(vInvoiceDate)
   Me.ProcessedWhen = rec(LBound(rec), td.col_ProcessedWhen)
   Me.InvoiceNo = rec(LBound(rec), td.col_InvoiceNo)
   

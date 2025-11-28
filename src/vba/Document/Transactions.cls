@@ -28,7 +28,7 @@ If target.row > 1 Then
       Set r = ws.Cells(target.row, r.Column)
       If IsEmpty(r) Then
         Dim tmp: tmp = DateAdd("m", 1, target)
-        r = DateAdd("d", -1, DateSerial(Year(tmp), Month(tmp), 1))
+        r = DateAdd("d", -1, DateSerial(year(tmp), month(tmp), 1))
       End If
     End If
   End If

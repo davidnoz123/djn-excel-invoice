@@ -494,11 +494,11 @@ Public Property Get TitleFontColor() As OLE_COLOR
     TitleFontColor = lPTitleFontColor
 End Property
 
-Public Property Get Month() As Long
-    Month = lPMonth
+Public Property Get month() As Long
+    month = lPMonth
 End Property
 
-Public Property Let Month(ByVal lMonth As Long)
+Public Property Let month(ByVal lMonth As Long)
     If lMonth = 0 Then
         Value = Empty
     Else
@@ -509,15 +509,15 @@ Public Property Let Month(ByVal lMonth As Long)
     lPMonth = lMonth
 End Property
 
-Public Property Get Year() As Long
-    Year = lPYear
+Public Property Get year() As Long
+    year = lPYear
 End Property
 
-Public Property Let Year(ByVal lYear As Long)
+Public Property Let year(ByVal lYear As Long)
     If lYear = 0 Then
         Value = Empty
     Else
-        Value = VBA.DateSerial(CheckYear(lYear), VBA.Month(dValue), VBA.Day(dValue))
+        Value = VBA.DateSerial(CheckYear(lYear), VBA.month(dValue), VBA.Day(dValue))
     End If
     lPYear = lYear
 End Property
@@ -531,8 +531,8 @@ Public Property Let Day(ByVal lDay As Long)
         Value = Empty
     Else
         If lDay < 0 Then lDay = lPDay
-        lDay = fMin(lDay, VBA.Day(VBA.DateSerial(VBA.Year(dValue), VBA.Month(dValue) + 1, 0)))
-        Value = VBA.DateSerial(VBA.Year(dValue), VBA.Month(dValue), lDay)
+        lDay = fMin(lDay, VBA.Day(VBA.DateSerial(VBA.year(dValue), VBA.month(dValue) + 1, 0)))
+        Value = VBA.DateSerial(VBA.year(dValue), VBA.month(dValue), lDay)
     End If
     lPDay = lDay
 End Property
@@ -555,8 +555,8 @@ Public Property Let Value(ByVal newDate As Variant)
     If Cancel = 0 Then 'Not canceled.
 
         If bInit And Not IsEmpty(newDate) Then
-            CBxY.ListIndex = VBA.Year(newDate) - 1904
-            CBxM.ListIndex = VBA.Month(newDate) - 1
+            CBxY.ListIndex = VBA.year(newDate) - 1904
+            CBxM.ListIndex = VBA.month(newDate) - 1
         End If
         
         If (bPValueIsNull = IsEmpty(newDate)) Or (newDate <> dValue) Then
@@ -802,7 +802,7 @@ Public Sub Add_Calendar_into_Frame(ByVal cFrame As MSForms.Frame)
     With CBxY
         .ListRows = 5
         .List = v
-        .ListIndex = VBA.Year(dValue) - 1904
+        .ListIndex = VBA.year(dValue) - 1904
         .ShowDropButtonWhen = fmShowDropButtonWhenFocus
         .font.Bold = True
         .MatchRequired = True
@@ -811,7 +811,7 @@ Public Sub Add_Calendar_into_Frame(ByVal cFrame As MSForms.Frame)
     With CBxM
         .ListRows = 12
         .List = fMonthName(lPMonthLength)
-        .ListIndex = VBA.Month(dValue) - 1
+        .ListIndex = VBA.month(dValue) - 1
         .ShowDropButtonWhen = fmShowDropButtonWhenFocus
         .font.Bold = True
         .MatchRequired = True
@@ -902,7 +902,7 @@ Public Sub Move( _
         Optional vHeight, _
         Optional vLayout)
         
-    Dim i As Long, l As Currency, b As Currency, lc As Currency, bc As Currency
+    Dim i As Long, L As Currency, b As Currency, lc As Currency, bc As Currency
     Dim t As Long, b_ym As Currency, b_combo_m As Currency
     
     Const h_combo As Long = 16
@@ -919,10 +919,10 @@ Public Sub Move( _
             sPHeight = IIf(IsMissing(vHeight), IIf(Height = -1, .Height, Height), vHeight)
             sPWidth = IIf(IsMissing(vWidth), IIf(Width = -1, .Width, Width), vWidth)
             
-            l = Height
+            L = Height
             b = Width
-            l = Zero_Negative_Value(l - IIf(ShowTitle Or ShowDateSelectors, h_combo, 0) - 1)
-            lc = CCur(l / t)
+            L = Zero_Negative_Value(L - IIf(ShowTitle Or ShowDateSelectors, h_combo, 0) - 1)
+            lc = CCur(L / t)
             bc = CCur(b / 7)
             b = bc * 7
         End With
@@ -996,14 +996,14 @@ End Sub
 Public Sub NextDay()
     Dim d As Date
     d = dValue + 1
-    d = VBA.DateSerial(CheckYear(VBA.Year(d)), VBA.Month(d), VBA.Day(d))
+    d = VBA.DateSerial(CheckYear(VBA.year(d)), VBA.month(d), VBA.Day(d))
     Value = d
 End Sub
 
 Public Sub NextWeek()
     Dim d As Date
     d = dValue + 7
-    d = VBA.DateSerial(CheckYear(VBA.Year(d)), VBA.Month(d), VBA.Day(d))
+    d = VBA.DateSerial(CheckYear(VBA.year(d)), VBA.month(d), VBA.Day(d))
     Value = d
 End Sub
 
@@ -1013,21 +1013,21 @@ End Sub
 
 Public Sub NextYear()
     Dim d As Date
-    d = VBA.DateSerial(CheckYear(VBA.Year(dValue) + 1), VBA.Month(dValue), VBA.Day(dValue))
+    d = VBA.DateSerial(CheckYear(VBA.year(dValue) + 1), VBA.month(dValue), VBA.Day(dValue))
     Value = d
 End Sub
 
 Public Sub PreviousDay()
     Dim d As Date
     d = dValue - 1
-    d = VBA.DateSerial(CheckYear(VBA.Year(d)), VBA.Month(d), VBA.Day(d))
+    d = VBA.DateSerial(CheckYear(VBA.year(d)), VBA.month(d), VBA.Day(d))
     Value = d
 End Sub
 
 Public Sub PreviousWeek()
     Dim d As Date
     d = dValue - 7
-    d = VBA.DateSerial(CheckYear(VBA.Year(d)), VBA.Month(d), VBA.Day(d))
+    d = VBA.DateSerial(CheckYear(VBA.year(d)), VBA.month(d), VBA.Day(d))
     Value = d
 End Sub
 
@@ -1037,7 +1037,7 @@ End Sub
 
 Public Sub PreviousYear()
     Dim d As Date
-    d = VBA.DateSerial(CheckYear(VBA.Year(dValue) - 1), VBA.Month(dValue), VBA.Day(dValue))
+    d = VBA.DateSerial(CheckYear(VBA.year(dValue) - 1), VBA.month(dValue), VBA.Day(dValue))
     Value = d
 End Sub
 
@@ -1047,7 +1047,7 @@ End Sub
 
 Public Sub Refresh()
     If bInit Then
-        Call Refresh_Panel(VBA.Month(dValue), VBA.Year(dValue))
+        Call Refresh_Panel(VBA.month(dValue), VBA.year(dValue))
         Call ApplyFontChanges
     End If
 End Sub
@@ -1130,8 +1130,8 @@ Private Sub Class_Initialize()
     bPShowTitle = True
     bPShowDateSelectors = True
     dValue = VBA.Date
-    lPMonth = VBA.Month(VBA.Date)
-    lPYear = VBA.Year(VBA.Date)
+    lPMonth = VBA.month(VBA.Date)
+    lPYear = VBA.year(VBA.Date)
     lPDay = VBA.Day(VBA.Date)
     lPFontSize = 8
     lPMonthLength = 1
@@ -1205,7 +1205,7 @@ End Sub
 '# Private Function
 
 Private Function ArraY_Days(ByVal lMonth As Long, ByVal lYear As Long)
-    Dim v(0 To 41) As Date, i As Long, g As Long, l As Long, p As Long, t As Date
+    Dim v(0 To 41) As Date, i As Long, g As Long, L As Long, p As Long, t As Date
     
     i = VBA.DateTime.Weekday(VBA.DateSerial(lYear, lMonth, 1), 1 + lPFirstDay Mod 7) - 1
     
@@ -1214,28 +1214,28 @@ Private Function ArraY_Days(ByVal lMonth As Long, ByVal lYear As Long)
     g = VBA.Day(VBA.DateSerial(lYear, lMonth + 1, 0)) + i
     
     p = 1
-    For l = i To 0 Step -1
-        v(l) = VBA.DateSerial(lYear, lMonth, p)
+    For L = i To 0 Step -1
+        v(L) = VBA.DateSerial(lYear, lMonth, p)
         p = p - 1
     Next
     
     p = 0
-    For l = i To g
+    For L = i To g
         p = p + 1
-        v(l) = VBA.DateSerial(lYear, lMonth, p)
+        v(L) = VBA.DateSerial(lYear, lMonth, p)
     Next
     
-    For l = g To 41
-        v(l) = VBA.DateSerial(lYear, lMonth, p)
+    For L = g To 41
+        v(L) = VBA.DateSerial(lYear, lMonth, p)
         p = p + 1
     Next
     
     If bPRightToLeft Then
-        For l = 0 To 5
+        For L = 0 To 5
             For i = 0 To 2
-                t = v(l * 7 + i)
-                v(l * 7 + i) = v(l * 7 + (6 - i))
-                v(l * 7 + (6 - i)) = t
+                t = v(L * 7 + i)
+                v(L * 7 + i) = v(L * 7 + (6 - i))
+                v(L * 7 + (6 - i)) = t
             Next
         Next
     End If
@@ -1280,17 +1280,17 @@ Private Function SumMonthsToDate(dDate As Date, Optional lMonth As Long = 1) As 
     Dim d As Date
     
     d = VBA.DateSerial( _
-            VBA.Year(dDate), _
-            VBA.Month(dDate) + lMonth, _
+            VBA.year(dDate), _
+            VBA.month(dDate) + lMonth, _
             fMin( _
                 VBA.Day(dDate), _
                 VBA.Day( _
                     VBA.DateSerial( _
-                    VBA.Year(dDate), _
-                    VBA.Month(dDate) + 1 + VBA.Abs(lMonth), _
+                    VBA.year(dDate), _
+                    VBA.month(dDate) + 1 + VBA.Abs(lMonth), _
                     0))))
                     
-    If d = VBA.DateSerial(CheckYear(VBA.Year(d)), VBA.Month(d), VBA.Day(d)) Then
+    If d = VBA.DateSerial(CheckYear(VBA.year(d)), VBA.month(d), VBA.Day(d)) Then
         SumMonthsToDate = d
     Else
         SumMonthsToDate = dDate
@@ -1432,15 +1432,15 @@ Private Sub Refresh_Selected_Day(ByVal dValue As Date, ByVal i As Long)
                 .ForeColor = cDayFontColorSelected
             End With
         End If
-        lPMonth = VBA.Month(dValue)
-        lPYear = VBA.Year(dValue)
+        lPMonth = VBA.month(dValue)
+        lPYear = VBA.year(dValue)
         lPDay = VBA.Day(dValue)
     End If
 
 End Sub
 
 Private Sub Refresh_Panel(ByVal lMonth As Long, ByVal lYear As Long)
-    Dim v As Variant, i As Long, l As Long, idxSel As Variant
+    Dim v As Variant, i As Long, L As Long, idxSel As Variant
     Dim iDay As Long
     Dim lBackColor As OLE_COLOR
     Dim lBackColorA As Variant
@@ -1477,7 +1477,7 @@ Private Sub Refresh_Panel(ByVal lMonth As Long, ByVal lYear As Long)
                 If .Caption <> VBA.Day(v(i)) Then
                     .Caption = VBA.Day(v(i))
                 End If
-                If lMonth = VBA.Month(v(i)) Then
+                If lMonth = VBA.month(v(i)) Then
                     If .ForeColor <> GridFontColor Then
                         .ForeColor = GridFontColor
                     End If
@@ -1545,7 +1545,7 @@ Private Sub Refresh_Panel(ByVal lMonth As Long, ByVal lYear As Long)
                 If .Caption <> VBA.Day(v(i)) Then
                     .Caption = VBA.Day(v(i))
                 End If
-                If lMonth = VBA.Month(v(i)) Then
+                If lMonth = VBA.month(v(i)) Then
                     If .ForeColor <> GridFontColor Then
                         .ForeColor = GridFontColor
                     End If
@@ -1604,23 +1604,23 @@ Private Sub Refresh_Panel(ByVal lMonth As Long, ByVal lYear As Long)
     Next
     
     If UseDefaultBackColors = False Then
-        For l = 0 To 6
-            If mLabelButtons(l).Obj_CmBl.BackStyle = fmBackStyleTransparent Then
-                mLabelButtons(l).Obj_CmBl.BackStyle = fmBackStyleOpaque
+        For L = 0 To 6
+            If mLabelButtons(L).Obj_CmBl.BackStyle = fmBackStyleTransparent Then
+                mLabelButtons(L).Obj_CmBl.BackStyle = fmBackStyleOpaque
             End If
-            If mLabelButtons(l).Obj_CmBl.BackColor <> lPHeaderBackColor Then
-                mLabelButtons(l).Obj_CmBl.BackColor = lPHeaderBackColor
+            If mLabelButtons(L).Obj_CmBl.BackColor <> lPHeaderBackColor Then
+                mLabelButtons(L).Obj_CmBl.BackColor = lPHeaderBackColor
             End If
         Next
     Else
-        For l = 0 To 6
-            If mLabelButtons(l).Obj_CmBl.BackStyle = fmBackStyleOpaque Then
-               mLabelButtons(l).Obj_CmBl.BackStyle = fmBackStyleTransparent
+        For L = 0 To 6
+            If mLabelButtons(L).Obj_CmBl.BackStyle = fmBackStyleOpaque Then
+               mLabelButtons(L).Obj_CmBl.BackStyle = fmBackStyleTransparent
             End If
         Next
     End If
     
-    If lMonth = VBA.Month(dValue) And lYear = VBA.Year(dValue) Then
+    If lMonth = VBA.month(dValue) And lYear = VBA.year(dValue) Then
         Call Refresh_Selected_Day(dValue, idxSel)
     Else
         lPMonth = 0

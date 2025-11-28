@@ -17,6 +17,8 @@ Const INVOICE_TEMP_WORKBOOK = "InvoiceTemplateTemp.xlsx"
 Dim fso As New FileSystemObject
 Dim ws_tmp As Worksheet
 Dim TransactionColumn2InvoiceHeaderColumn As Scripting.Dictionary
+Dim TAX_RATE_value As Double
+Dim Invoice_Subtotal_formula As String
 
 Sub Init(main_ As cCustomerData, template_name As String)
 Dim ref: ref = ParseCellReference(template_name)
@@ -24,7 +26,7 @@ Dim wb As Workbook: Set wb = Nothing
 If ref(1) <> "" Then
     Dim drName As String: drName = ref(0)
     If drName = "" Then
-        drName = ThisWorkbook.Path
+        drName = ThisWorkbook.path
     Else
         Dim fso As New FileSystemObject
         drName = fso.GetAbsolutePathName(drName)
@@ -62,7 +64,67 @@ For Each c In lo.HeaderRowRange
     End If
 Next c
 
+TAX_RATE_value = -1#
+Invoice_Subtotal_formula = ""
+
+If True Then
+    Const TAX_RATE_rng_name = "TAX_RATE"
+    Dim n As name
+    For Each n In ws_tmp.Names
+        If EndsWith(n.name, TAX_RATE_rng_name) Then
+            If TAX_RATE_value >= 0 Then
+                Call ErrorExitX("More than one named range on the sheet has a name ending with:'" + TAX_RATE_rng_name + "'", n.RefersToRange)
+            End If
+            If n.name <> ws_tmp.name + "!" + TAX_RATE_rng_name Then
+                Call ErrorExitX("Unexpected scope for named range:'" + TAX_RATE_rng_name + "'", n.RefersToRange)
+            End If
+            If n.RefersToRange.Cells.CountLarge <> 1 Then
+                Call ErrorExitX("Unexpected multi-cell range for name:'" + TAX_RATE_rng_name + "'", n.RefersToRange)
+            End If
+            If Not IsNumeric(n.RefersToRange.Value) Then
+                Call ErrorExitX("Unexpected non-numeric value in named range:'" + TAX_RATE_rng_name + "'", n.RefersToRange)
+            End If
+            If n.RefersToRange.Value < 0 Or n.RefersToRange.Value > 1# Then
+                Call ErrorExitX("Unexpected out-of-range (i.e., [0.0, 1.0]) numeric value in named range:'" + TAX_RATE_rng_name + "'", n.RefersToRange)
+            End If
+            TAX_RATE_value = CDbl(n.RefersToRange.Value)
+        End If
+    Next n
+    
+    If TAX_RATE_value = -1# Then
+        Call ErrorExitX("Unexpected missing named range in worksheet:'" + TAX_RATE_rng_name + "'", ws_tmp.UsedRange)
+    End If
+End If
+
+If True Then
+    Dim tmp As Range: Set tmp = Invoice_Subtotal_formula_cell(ws_tmp)
+End If
+
 End Sub
+
+Private Function Invoice_Subtotal_formula_cell(ws As Worksheet) As Range
+Dim ret As Range: Set ret = Nothing
+
+Dim re As New VBScript_RegExp_55.RegExp
+Const Invoice_Subtotal_formula_regex_pattern = "^=SUM\(SimpleInvoice[0-9]+\[Price\]\)$"
+re.Pattern = Invoice_Subtotal_formula_regex_pattern
+re.Global = False
+re.IgnoreCase = False
+    
+Dim c As Range
+For Each c In ws.UsedRange.SpecialCells(xlCellTypeFormulas)
+    If re.Test(c.Formula) Then
+        If Invoice_Subtotal_formula <> "" Then
+            Call ErrorExitX("More than one cell formula matches regular expression:'" + Invoice_Subtotal_formula_regex_pattern + "'", c)
+        End If
+        Set ret = c
+    End If
+Next c
+If ret Is Nothing Then
+    Call ErrorExitX("Unexpected worksheet missing formula matching regular expression:'" + Invoice_Subtotal_formula_regex_pattern + "'", ws.UsedRange)
+End If
+Set Invoice_Subtotal_formula_cell = ret
+End Function
 
 Sub SearchAndReplace(ws As Worksheet, search_and_replace As Scripting.Dictionary)
 Dim k
@@ -81,12 +143,14 @@ End If
 StringifyInvoiceContactDetail = ret
 End Function
 
-Private Sub ReplaceTokens(ws As Worksheet, main_record As cCustomerRecord, invoice_number As Long, date_ As Date)
+Private Sub ReplaceTokens(ws As Worksheet, main_record As cCustomerRecord, invoice_number As Long, date_ As Date, dueDate As Date)
 ' Substitute the variable strings in the document
 Dim search_and_replace As New Scripting.Dictionary
 search_and_replace.CompareMode = TextCompare
 search_and_replace.Add "{InvoiceNo}", format(invoice_number, "0000000")
 search_and_replace.Add "{InvoiceDate}", format(date_, "")
+search_and_replace.Add "{DaysToDueDate}", CStr(CLng(dueDate - date_))
+
 
 search_and_replace.Add "{InvoicedEmail}", StringifyInvoiceContactDetail(main_record.EmailAddressx, "Email: ")
 
@@ -253,7 +317,7 @@ Application.ScreenUpdating = False
 Application.DisplayAlerts = False
 
 Dim wb_out As Workbook
-Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.Path + "\" + INVOICE_TEMP_WORKBOOK
+Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.path + "\" + INVOICE_TEMP_WORKBOOK
 If Not WorkbookIsOpen(tmp_xlsx, wb_out) Then
     Dim bFileAlreadyOpen As Boolean
     Set wb_out = SafeGetWorkbook(tmp_xlsx, bFileAlreadyOpen)
@@ -275,13 +339,18 @@ Application.DisplayAlerts = bDisplayAlerts
 Application.ScreenUpdating = bScreenUpdating
 End Sub
 
-Function CreateInvoiceWorksheet(main_ As cCustomerData, transColl As Collection, invoice_number As Long, date_ As Date) As Worksheet
+Function CreateInvoiceWorksheet(main_ As cCustomerData, transColl As Collection, invoice_number As Long, date_ As Date, ByRef inv_data As cInvoiceData) As Worksheet
 Dim bScreenUpdating As Boolean: bScreenUpdating = Application.ScreenUpdating
 On Error GoTo 10
 Application.ScreenUpdating = False
 
+Set inv_data = New cInvoiceData
+
+inv_data.TAX_RATE = TAX_RATE_value
+inv_data.dueDate = InvoiceDueDate(date_, 90)
+
 Dim wb_out As Workbook
-Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.Path + "\" + INVOICE_TEMP_WORKBOOK
+Dim tmp_xlsx As String: tmp_xlsx = ThisWorkbook.path + "\" + INVOICE_TEMP_WORKBOOK
 If Not WorkbookIsOpen(tmp_xlsx, wb_out) Then
     Dim bFileAlreadyOpen As Boolean
     Set wb_out = SafeGetWorkbook(tmp_xlsx, bFileAlreadyOpen)
@@ -298,7 +367,7 @@ Dim ws_out As Worksheet: Set ws_out = wb_out.Sheets(wb_out.Sheets.count)
 
 ' Replace the token strings with the CustomerRecord values
 Dim main_record As cCustomerRecord: Set main_record = transColl(1).CustomerRecord
-Call ReplaceTokens(ws_out, main_record, invoice_number, date_)
+Call ReplaceTokens(ws_out, main_record, invoice_number, date_, inv_data.dueDate)
 
 ' Reshape the ListObject (i.e., the Excel table) and the Invoice cells
 Dim rows_expect As Long: rows_expect = transColl.count
@@ -317,6 +386,12 @@ For Each tr In transColl
     Next tc
     row = row + 1
 Next tr
+
+Dim tmp As Range: Set tmp = Invoice_Subtotal_formula_cell(ws_out)
+
+inv_data.Invoice_Subtotal = tmp.Value
+
+
 
 GoTo 20
 10:
